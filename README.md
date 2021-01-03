@@ -1,6 +1,7 @@
 # KNX Utility
 
-## [ModBus Gateway](https://github.com/MBizm/knx/tree/main/src/modbus)
+## Projects
+### [ModBus Gateway](https://github.com/MBizm/knx/tree/main/src/modbus)
 ModBus-KNX Gateway script - sending data via simple configuration
 
 The ModBus-KNX Gatway sends data from a ModBus appliance to KNX. It is based on the IP/KNX Gateway device with an installed KNXD library.
