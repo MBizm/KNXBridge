@@ -10,14 +10,15 @@ All configuration can be done via the CONFIG.yaml file.
 
 ## Configuration instructions:
 The configuration file contains the following sections:
--config section:
+
+- **config section**:
   - general configurations for executing the script
   - define your intended logging level here (*"off"*, *"error"*, *"info"*) with *"info"* providing information about each sent attribute
-- modbusAppliance:
+- **modbusAppliance**:
   - defines all physical appliances that shall be linked. The script supports multiple ModBus devices as source for data sent to the KNX bus.
   - Attributes are linked via the *modbusApplID* attribute id that every attribute needs to define
-  - knxdIP represents the IP/KNX bus devices IP
-- attributes:
+  - *knxdIP* represents the IP/KNX bus devices IP
+- **attributes**:
   - list of attributes transferred between the ModBus appliance and the KNX bus
   - script currently only supports ModBus-READ and KNX-WRITE instructions, defined by *type* value *"modbus2knx"* (TODO)
   - *modbusAddrDec* defines the ModBus address in decimal representation, *modbusFormat* the ModBus attribute data type - currently only "float" is supported (TODO)
