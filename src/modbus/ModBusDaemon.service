@@ -1,0 +1,11 @@
+[Unit]
+Description=ModBus2KNX Gateway Daemon
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/bin/GatewayDaemon.py
+StandardInput=tty-force
+
+[Install]
+WantedBy=multi-user.target

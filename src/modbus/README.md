@@ -5,6 +5,7 @@ The ModBus-KNX Gatway sends data from a ModBus appliance to KNX. It is based on 
 All configuration can be done via the CONFIG.yaml file.
 
 ## Prerequisites:
+- A Python runtime version >= 3.5
 - Ensure that you have a IP/KNX gateway installed and KNXD library set up
 - Find the instructions here: https://www.meintechblog.de/2018/07/tul-stick-als-knx-ip-gateway-auf-dem-raspberry-pi-einrichten-mit-knxd/
 
@@ -29,3 +30,7 @@ The configuration file contains the following sections:
     - *"high"*        - updates once every minute
     - *"medium"*      - updates once every hour
     - *"low"*         - updates once every 24hours
+  
+## Daemon setup
+The ModBus 2 KNX Gateway can be executed as a daemon service at system startup. To do so, execute the *register_daemon.sh* script file. 
+The script file needs to be executed everytime the configuration changes or you update to the latest version.

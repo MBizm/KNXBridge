@@ -28,6 +28,7 @@
 #####################################################################################################################
 import os
 import yaml
+from pathlib import Path
 from datetime import datetime
 from typing import Dict
 from threading import Timer
@@ -35,6 +36,24 @@ from pymodbus.client.sync import ModbusTcpClient
 from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 
+# verbosity mask
+VERBOSITYDEF: Dict[str, int] = {
+    "off": 0x00,
+    "error": 0x01,
+    "info": 0x07
+}
+
+verbosity = VERBOSITYDEF['error']
+
+
+def log(level, msg):
+    # create central directory for Daemon script
+    if not os.path.isdir("{0}/.knx/modbus".format(Path.home())):
+        Path("{0}/.knx/modbus".format(Path.home())).mkdir(parents=True, exist_ok=True)
+    # check activated log level
+    if verbosity & VERBOSITYDEF[level] == VERBOSITYDEF[level]:
+        with open("{0}/.knx/modbus/.log".format(Path.home()), 'a+') as stream:
+            stream.write("{0}\n".format(msg))
 
 # -------------- Utility number conversion from registers -------------
 # https://forum.fhem.de/index.php/topic,75638.msg987876.html?PHPSESSID=b17q82mhkt6bjj8s550cmgrdjr#msg987876
@@ -176,21 +195,22 @@ class modbus2knxd:
         "low": 0x08,
         "initial": 0x0F
     }
-    # verbosity mask
-    VERBOSITY: Dict[str, int] = {
-        "off": 0x00,
-        "error": 0x01,
-        "info": 0x07
-    }
 
     def __init__(self):
         configuration = None
 
         try:
-            with open("CONFIG.yaml", 'r') as stream:
-                configuration = yaml.safe_load(stream)
+            if os.path.isfile("{0}/.knx/modbus/CONFIG.yaml".format(Path.home())):
+                with open("{0}/.knx/modbus/CONFIG.yaml".format(Path.home()), 'r') as stream:
+                    log('info', 'Configuration file loaded: {0}/.knx/modbus/CONFIG.yaml'.format(Path.home()))
+                    configuration = yaml.safe_load(stream)
+            else:
+                with open("CONFIG.yaml", 'r') as stream:
+                    log('info', 'Configuration file loaded: CONFIG.yaml')
+                    configuration = yaml.safe_load(stream)
         except OSError as ex:
-            print("ERROR: {0} Could not load configuration file".format(datetime.now().strftime("%d.%b. %I:%M:%S")))
+            log('error',
+                'ERROR: {0} Could not load configuration file'.format(datetime.now().strftime("%d.%b. %I:%M:%S")))
             exit(1)
 
         # build up list of defined modbus clients
@@ -209,18 +229,20 @@ class modbus2knxd:
         self.attrs = configuration['attributes']
 
         # verbosity level
-        self.verbosity = type(self).VERBOSITY[configuration['configVerbose']]
+        global verbosity
+        verbosity = VERBOSITYDEF[configuration['configVerbose']]
 
     def update(self, freq):
         # initialize connection with modbus clients
         for mbc in self.modbusClients:
             # do not check for success, error will be given by requesting values
             success = mbc.connect()
-            if not success and self.verbosity & type(self).VERBOSITY["error"] == self.verbosity & type(self).VERBOSITY["error"]:
+            if not success:
                 # log connection error
-                print('ERROR: {0} Could not connect to ModBus client {1}:{2}'.format(datetime.now().strftime("%d.%b. %I:%M:%S"),
-                                                                                     mbc.host,
-                                                                                     mbc.port))
+                log('error',
+                    'ERROR: {0} Could not connect to ModBus client {1}:{2}'.format(datetime.now().strftime("%d.%b. %I:%M:%S"),
+                                                                                   mbc.host,
+                                                                                   mbc.port))
 
         # iterate list of attributes to be updated
         for attr in self.attrs:
@@ -248,9 +270,10 @@ class modbus2knxd:
                                     val = val + modbus_utils.ReadFloat(self.modbusClients[attr['modbusApplID']],
                                                                        ids)
                     except Exception as ex:
-                        print("ERROR: {0} Error reading ModBus value - {1}: {2}".format(datetime.now().strftime("%d.%b. %I:%M:%S"),
-                                                                                        attr['name'],
-                                                                                        ex))
+                        log('error',
+                            'ERROR: {0} Error reading ModBus value - {1}: {2}'.format(datetime.now().strftime("%d.%b. %I:%M:%S"),
+                                                                                      attr['name'],
+                                                                                      ex))
                         val = None
 
                     if not (val is None):
@@ -263,13 +286,14 @@ class modbus2knxd:
                         os.popen('knxtool groupwrite ip:{0} {1} {2}'.format(self.knxdIP,
                                                                             attr['knxAddr'],
                                                                             dpt))
-                        if self.verbosity & type(self).VERBOSITY["info"] == type(self).VERBOSITY["info"]:
-                            # log success
-                            print('INFO: {0} Send to KNXD "{1}"[{2}](modbus={3}, knx={4})'.format(datetime.now().strftime("%d.%b. %I:%M:%S"),
-                                                                                                  attr['name'],
-                                                                                                  attr['knxAddr'],
-                                                                                                  val,
-                                                                                                  dpt))
+
+                        # log success
+                        log('info',
+                            'INFO: {0} Send to KNXD "{1}"[{2}](modbus={3}, knx={4})'.format(datetime.now().strftime("%d.%b. %I:%M:%S"),
+                                                                                            attr['name'],
+                                                                                            attr['knxAddr'],
+                                                                                            val,
+                                                                                            dpt))
 
         # initialize connection with modbus clients
         for mbc in self.modbusClients:

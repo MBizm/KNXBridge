@@ -8,5 +8,6 @@ The ModBus-KNX Gatway sends data from a ModBus appliance to KNX. It is based on 
 All configuration can be done via the CONFIG.yaml file.
 
 ## Prerequisites:
+- A Python runtime version >= 3.5
 - Ensure that you have a IP/KNX gateway installed and KNXD library set up
 - Find the instructions here: https://www.meintechblog.de/2018/07/tul-stick-als-knx-ip-gateway-auf-dem-raspberry-pi-einrichten-mit-knxd/
