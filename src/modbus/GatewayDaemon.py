@@ -176,7 +176,7 @@ class modbus2knxd:
         "low": 0x08,
         "initial": 0x0F
     }
-    #verbosity mask
+    # verbosity mask
     VERBOSITY: Dict[str, int] = {
         "off": 0x00,
         "error": 0x01,
@@ -190,7 +190,7 @@ class modbus2knxd:
             with open("CONFIG.yaml", 'r') as stream:
                 configuration = yaml.safe_load(stream)
         except OSError as ex:
-            print("ERROR: {0} Could not load configuration file").format(datetime.now().strftime("%d.%b. %I:%M:%S"))
+            print("ERROR: {0} Could not load configuration file".format(datetime.now().strftime("%d.%b. %I:%M:%S")))
             exit(1)
 
         # build up list of defined modbus clients
@@ -248,9 +248,9 @@ class modbus2knxd:
                                     val = val + modbus_utils.ReadFloat(self.modbusClients[attr['modbusApplID']],
                                                                        ids)
                     except Exception as ex:
-                        print("ERROR: {0} Error reading ModBus value - {1}: {2}").format(datetime.now().strftime("%d.%b. %I:%M:%S"),
-                                                                                         attr['name'],
-                                                                                         ex)
+                        print("ERROR: {0} Error reading ModBus value - {1}: {2}".format(datetime.now().strftime("%d.%b. %I:%M:%S"),
+                                                                                        attr['name'],
+                                                                                        ex))
                         val = None
 
                     if not (val is None):
