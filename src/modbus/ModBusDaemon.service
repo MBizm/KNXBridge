@@ -4,8 +4,7 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /usr/bin/GatewayDaemon.py
-StandardInput=tty-force
+ExecStart=/usr/bin/python3 /usr/bin/ModBusDaemon.py
 
 [Install]
 WantedBy=multi-user.target
