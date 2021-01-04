@@ -12,19 +12,19 @@ All configuration can be done via the CONFIG.yaml file.
 The configuration file contains the following sections:
 -config section:
   - general configurations for executing the script
-  - define your intended logging level here ("off", "error", "info") with "info" providing information about each sent attribute
+  - define your intended logging level here (*"off"*, *"error"*, *"info"*) with *"info"* providing information about each sent attribute
 - modbusAppliance:
   - defines all physical appliances that shall be linked. The script supports multiple ModBus devices as source for data sent to the KNX bus.
-  - Attributes are linked via the [modbusApplID] attribute id that every attribute needs to define
+  - Attributes are linked via the *modbusApplID* attribute id that every attribute needs to define
   - knxdIP represents the IP/KNX bus devices IP
 - attributes:
   - list of attributes transferred between the ModBus appliance and the KNX bus
-  - script currently only supports ModBus-READ and KNX-WRITE instructions, defined by [type] value "modbus2knx" (TODO)
-  - [modbusAddrDec] defines the ModBus address in decimal representation, [modbusFormat] the ModBus attribute data type - currently only "float" is supported (TODO)
-  - [modbusAddrDec] allows the automatic calculation of the sum of several ModBus addresses by "[addr1, addr2]" representation
-  - [knxAddr] defines the KNX address in "x/y/z" notation, [knxFormat] the KNX DPT data type - currently only "DPT14" is supported (TODO)
-  - [updFreq] defines the frequency the attribute is updated:
-    - "very high"   - updates once every 10sec, be careful not to flood the bus with too many requests
-    - "high"        - updates once every minute
-    - "medium"      - updates once every hour
-    - "low"         - updates once every 24hours
+  - script currently only supports ModBus-READ and KNX-WRITE instructions, defined by *type* value *"modbus2knx"* (TODO)
+  - *modbusAddrDec* defines the ModBus address in decimal representation, *modbusFormat* the ModBus attribute data type - currently only "float" is supported (TODO)
+  - *modbusAddrDec* allows the automatic calculation of the sum of several ModBus addresses by *"addr1, addr2"* representation
+  - *knxAddr* defines the KNX address in *"x/y/z"* notation, *knxFormat* the KNX DPT data type - currently only *"DPT14"* is supported (TODO)
+  - *updFreq* defines the frequency the attribute is updated:
+    - *"very high"*   - updates once every 10sec, be careful not to flood the bus with too many requests
+    - *"high"*        - updates once every minute
+    - *"medium"*      - updates once every hour
+    - *"low"*         - updates once every 24hours
