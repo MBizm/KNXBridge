@@ -1,0 +1,11 @@
+[Unit]
+Description=ModBus2KNX Gateway Daemon
+After=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/bin/KNXBridge/core/ModBusDaemon.py
+WorkingDirectory=/home/pi/.knx/bridge/
+
+[Install]
+WantedBy=multi-user.target

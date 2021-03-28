@@ -1,0 +1,240 @@
+#####################################################################################################################
+#
+#   ModBus-KNX Gateway script - sending data via simple configuration
+#   The script and the configuration file are provided under Apache 2.0 license.
+#   Author: MBizm [https://github.com/MBizm]
+#
+#   The ModBus-KNX Gatway sends data from a ModBus appliance to KNX. It is based on the IP/KNX Gateway device with an installed KNXD library.
+#   All configuration can be done via the CONFIG.yaml file. Follow the below instruction. The configuration file contains the following sections:
+#     -config section:
+#           -- general configurations for executing the script
+#           -- define your intended logging level here ("off", "error", "info") with "info" providing information about each sent attribute
+#     - modbusAppliance:
+#           -- defines all physical appliances that shall be linked. The script supports multiple ModBus devices as source for data sent to the KNX bus.
+#           -- Attributes are linked via the [modbusApplID] attribute id that every attribute needs to define
+#           -- knxdIP represents the IP/KNX bus devices IP
+#     - attributes:
+#           -- list of attributes transferred between the ModBus appliance and the KNX bus
+#           -- script currently only supports ModBus-READ and KNX-WRITE instructions, defined by [type] value "modbus2knx" (TODO)
+#           -- [modbusAddrDec] defines the ModBus address in decimal representation, [modbusFormat] the ModBus attribute data type - currently only "float" is supported (TODO)
+#           -- [modbusAddrDec] allows the automatic calculation of the sum of several ModBus addresses by "[addr1, addr2]" representation
+#           -- [knxAddr] defines the KNX address in "x/y/z" notation, [knxFormat] the KNX DPT data type - currently only "DPT14" is supported (TODO)
+#           -- [updFreq] defines the frequency the attribute is updated:
+#               --- "very high"   - updates once every 10sec, be careful not to flood the bus with too many requests
+#               --- "high"        - updates once every minute
+#               --- "medium"      - updates once every 10 minutes
+#               --- "low"         - updates once every hour
+#               --- "very low"    - updates once every 24hours
+#
+#####################################################################################################################
+
+configSet:  KNX Bridge for Modbus and ZigBee configuration
+configNote: >
+  Maintain your configuration for your devices to be linked here. ModBus data retrieved will be forwarded to corresponding KNX address. Multiple ModBus appliance can be configured.
+  First section covers ModBus and KNX endpoint information, second section will list attributes that gateway shall update.
+configVersion:  0.3
+configVerbose:  "info"
+
+#################################################
+#            Gateway information                #
+#################################################
+# maintain IP of KNX IP/Bus gateway device
+knxdAppliance:
+  knxdIP:     <ENTER YOUR IP HERE>
+
+# uncomment if ZigBee Gateway is not available
+deconzAppliance:
+    deConzIP:     <ENTER YOUR IP HERE>
+    deConzPort:   <ENTER YOUR PORT HERE>
+    deConzToken:  <ENTER YOUR TOKEN HERE>
+
+#################################################
+#   external appliance endpoint information     #
+#################################################
+# maintain modbus server information, can be multiple
+modbusAppliance:
+  - modbusApplID: 0
+    modbusName:   "Solar Inverter"
+    modbusIP:     <ENTER YOUR IP HERE>
+    modbusPort:   "1502"
+#  - modbusApplID: 1
+#    modbusName:   "Heating system"
+#    modbusIP:     <ENTER YOUR IP HERE>
+#    modbusPort:   "1502"
+
+# maintain ZigBee client information
+# some client may have multiple entries if mapped to multiple types (e.g. smoke sensor - light and sensor)
+zigbeeAppliance:
+  - zigbeeApplID: 0
+    zigbeeName:   "Light Living Room"
+    deConzID:     2
+    deConzType:   "lights"
+  #   Garage Gate Sensor   #
+  - zigbeeApplID: 1a
+    zigbeeName:   "Sensor Garage Gate - Closing State"
+    deConzID:     2
+    deConzType:   "sensors"
+  - zigbeeApplID: 1b
+    zigbeeName:   "Sensor Garage Gate - Temperature"
+    deConzID:     3
+    deConzType:   "sensors"
+  - zigbeeApplID: 1c
+    zigbeeName:   "Sensor Garage Gate - Temperature"
+    deConzID:     4
+    deConzType:   "sensors"
+  #####################
+  #   Smoke sensors   #
+  #####################
+  #   Technical equipment room   #
+  - zigbeeApplID: 2a
+    zigbeeName:   "Sensor TER - Smoke"
+    deConzID:     7
+    deConzType:   "sensors"
+  - zigbeeApplID: 2b
+    zigbeeName:   "Sensor TER - Temperature"
+    deConzID:     8
+    deConzType:   "sensors"
+
+#################################################
+#   ModBus and KNXD attribute parametrization   #
+#################################################
+attributes:
+  #   Solar Inverter   #
+  - name:           "Current AC Power"
+    type:           "modbus2knx"
+    modbusApplID:   0
+    modbusAddrDec:  100
+    modbusFormat:   "float"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "14.056"
+    updFreq:        "very high"
+  - name:           "Daily Yield Power"
+    type:           "modbus2knx"
+    modbusApplID:   0
+    modbusAddrDec:  101
+    modbusFormat:   "float"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "13.001"
+    updFreq:        "medium"
+  - name:           "Daily Yield Power - Contract"
+    type:           "modbus2knx"
+    modbusApplID:   0
+    modbusAddrDec:  322
+    modbusFormat:   "float"
+    function:       "val(0)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "5.006"
+    updFreq:        "medium"
+  - name:           "Current Power Consumption"
+    type:           "modbus2knx"
+    modbusApplID:   0
+    modbusAddrDec:  [106, 108, 116]
+    modbusFormat:   "float"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "14.056"
+    updFreq:        "very high"
+
+
+  #   Garage Gate Sensore   #
+  - name:           "Garage Gate Closing State"
+    type:           "zigbee2knx"
+    zigbeeApplID:   1a
+    zigbeeAttr:     "open"
+    zigbeeFormat:   "boolean"
+    function:       "inv"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "very high"
+  - name:           "Garage Gate Vibration"
+    type:           "zigbee2knx"
+    zigbeeApplID:   1c
+    zigbeeAttr:     "vibration"
+    zigbeeFormat:   "boolean"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "very high"
+  - name:           "Garage Gate Temperature"
+    type:           "zigbee2knx"
+    zigbeeApplID:   1b
+    zigbeeAttr:     "temperature"
+    zigbeeFormat:   "int"
+    function:       "div(100)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "9.001"
+    updFreq:        "low"
+  - name:           "Garage Gate NoConnection"
+    type:           "zigbee2knx"
+    zigbeeApplID:   1a
+    zigbeeAttr:     "lastupdated"
+    zigbeeFormat:   "date"
+    function:       "timechg(3600), timedelta(1800)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "medium"
+  - name:           "Garage Gate LowBattery"
+    type:           "zigbee2knx"
+    zigbeeApplID:   1b
+    zigbeeAttr:     "battery"
+    zigbeeFormat:   "int"
+    zigbeeSection:  "config"
+    function:       "lt(10)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "low"
+
+
+  #####################
+  #   Smoke sensors   #
+  #####################
+  #   TER   #
+  - name:           "TER Fire"
+    type:           "zigbee2knx"
+    zigbeeApplID:   2a
+    zigbeeAttr:     "fire"
+    zigbeeFormat:   "boolean"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "very high"
+  - name:           "TER Test"
+    type:           "zigbee2knx"
+    zigbeeApplID:   2a
+    zigbeeAttr:     "test"
+    zigbeeFormat:   "boolean"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "very high"
+  - name:           "TER LowBattery"
+    type:           "zigbee2knx"
+    zigbeeApplID:   2a
+    zigbeeAttr:     "lowbattery"
+    zigbeeFormat:   "boolean"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "medium"
+  - name:           "TER NoConnection"
+    type:           "zigbee2knx"
+    zigbeeApplID:   2a
+    zigbeeAttr:     "lastupdated"
+    zigbeeFormat:   "date"
+    function:       "timechg(3600), timedelta(900)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "medium"
+  - name:           "TER TemperatureAlarm"
+    type:           "zigbee2knx"
+    zigbeeApplID:   2b
+    zigbeeAttr:     "temperature"
+    zigbeeFormat:   "int"
+    function:       "div(100), gt(40)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.002"
+    updFreq:        "medium"
+  - name:           "TER Temperature"
+    type:           "zigbee2knx"
+    zigbeeApplID:   2b
+    zigbeeAttr:     "temperature"
+    zigbeeFormat:   "int"
+    function:       "div(100)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "9.001"
+    updFreq:        "medium"
