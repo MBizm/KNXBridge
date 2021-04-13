@@ -26,7 +26,6 @@
 #               --- "low"         - updates once every 24hours
 #
 #####################################################################################################################
-from datetime import datetime
 from threading import Timer
 from typing import Dict
 

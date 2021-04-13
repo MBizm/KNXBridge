@@ -1,5 +1,6 @@
 import os
 
+from EIBClient import EIBClient
 from core import Functions
 from core.util.BasicUtil import log
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
@@ -94,17 +95,13 @@ class KNXDDevice:
         :param newVal:      value in dpt representation
         :returns            true if new value matches cached value
         """
-        curKNXVal = os.popen("knxtool groupcacheread ip:{0} {1} | "
-                             "while read a b c data; do echo $data; done"
-                             .format(KNXGateway().hostIP, knxDest)).read()[:-1]
 
-        # special cases
-        if curKNXVal == '00':
-            curKNXVal = '0'
-        elif curKNXVal == '01':
-            curKNXVal = '1'
+        curKNXVal = EIBClient().GroupCache_Read(knxDest)
 
-        return curKNXVal == newVal
+        if len(newVal) == 1 and len(curKNXVal) == 2:
+            curKNXVal = curKNXVal[1:]
+
+        return curKNXVal.upper() == newVal.upper()
 
     #########################################
     #   custom client methods, read/write   #
