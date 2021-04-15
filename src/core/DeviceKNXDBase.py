@@ -1,6 +1,6 @@
 import os
 
-from EIBClient import EIBClient
+from EIBClient import EIBClientFactory
 from core import Functions
 from core.util.BasicUtil import log
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
@@ -95,8 +95,7 @@ class KNXDDevice:
         :param newVal:      value in dpt representation
         :returns            true if new value matches cached value
         """
-
-        curKNXVal = EIBClient().GroupCache_Read(knxDest)
+        curKNXVal = EIBClientFactory().getClient().GroupCache_Read(knxDest)
 
         if len(newVal) == 1 and len(curKNXVal) == 2:
             curKNXVal = curKNXVal[1:]
