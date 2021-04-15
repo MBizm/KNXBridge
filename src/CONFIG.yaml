@@ -19,7 +19,7 @@
 #           -- [modbusAddrDec] defines the ModBus address in decimal representation, [modbusFormat] the ModBus attribute data type - currently only "float" is supported (TODO)
 #           -- [modbusAddrDec] allows the automatic calculation of the sum of several ModBus addresses by "[addr1, addr2]" representation
 #           -- [knxAddr] defines the KNX address in "x/y/z" notation, [knxFormat] the KNX DPT data type - currently only "DPT14" is supported (TODO)
-#           -- [updFreq] defines the frequency the attribute is updated:
+#           -- [updFreq] defines the frequency the attribute is updated for modbus2knx, zigbee2knx scenarios (does not apply for knx2zigbee scenario):
 #               --- "very high"   - updates once every 10sec, be careful not to flood the bus with too many requests
 #               --- "high"        - updates once every minute
 #               --- "medium"      - updates once every 10 minutes

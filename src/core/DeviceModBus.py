@@ -2,7 +2,7 @@ from datetime import datetime
 
 from pymodbus.client.sync import ModbusTcpClient
 
-from core.DeviceKNXDBase import KNXDDevice
+from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
 from core.util.ModBusUtil import modbus_utils
 

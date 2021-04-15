@@ -5,8 +5,11 @@ import yaml
 
 ### ZigBee constants
 # ZigBee client type
-from core.DeviceKNXDBase import KNXDDevice
+from EIBClient import EIBClientListener, EIBClientFactory
+from common import printGroup, printValue
+from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
+from core.util.ZigBeeUtil import zigbee_utils
 
 ZIGBEETYPEDEF: Dict[int, str] = {
     0: "lights",
@@ -46,9 +49,13 @@ class ZigBeeGateway:
         except requests.exceptions.RequestException as e:
             print("ZigBeeGateway - could not load client information: {0}".format(e))
 
-    def getClientState(self, id, type, attr, section='state'):
+    def getClientState(self, id, type, attr, section=None):
         """ get attribute for a defined client """
         ret = None
+
+        # default is state sectionwith only a few exceptions
+        if section is None:
+            section = 'state'
 
         if not ZigBeeGateway.__state:
             # check if state information was requested at least once
@@ -122,12 +129,12 @@ class ZigBeeClient(KNXDDevice):
     #########################################
 
     # specific attribute requests based on configuration
-    def getAttribute(self, name, zbFormat, zbAttr, section='state'):
+    def getAttribute(self, name, zbFormat, zbAttr, zbSection=None):
         """ returns defined attribute for client """
         return ZigBeeGateway().getClientState(self.deconzID,
                                               self.deconzType,
                                               zbAttr,
-                                              section)
+                                              zbSection)
 
     def setAttribute(self, attr, val):
         """ sends request to update client status, will return true in case of success """
@@ -136,8 +143,18 @@ class ZigBeeClient(KNXDDevice):
                                               attr,
                                               val)
 
+    def installListener(self, attrName: str,
+                        knxSrc: str, knxFormat: str,
+                        zbAttr: str, zbFormat: str, zbSection: str):
+        # create new listener that will route incoming knx events and zigbee update requests
+        listener = ZigBeeClientListener(self, attrName,
+                                        knxSrc, knxFormat,
+                                        zbAttr, zbFormat, zbSection)
+        # register listener on central EIB/KNX bus monitor
+        EIBClientFactory().registerListener(listener)
+
     #########################################
-    #           overriden KNX methods       #
+    #           overridden KNX methods      #
     #########################################
     def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None) -> bool:
         """ adds additional reachable check for client """
@@ -154,3 +171,49 @@ class ZigBeeClient(KNXDDevice):
                                                                      self.uniqueID))
 
         return ret
+
+
+class ZigBeeClientListener(EIBClientListener):
+    """
+    will route knx event trigger received from EIB/KNX client to zigbee device
+    """
+
+    def __init__(self, zbClient: ZigBeeClient, attrName: str,
+                 knxSrc: str, knxFormat: str,
+                 zbAttr: str, zbFormat: str, zbSection: str):
+        # call super class
+        super().__init__(knxSrc)
+        # store instance attributes
+        self.zbClient = zbClient
+        self.attrName = attrName
+        self.knxFormat = knxFormat
+        self.zbSection = zbSection
+        self.zbAttr = zbAttr
+        self.zbFormat = zbFormat
+        # self.knxAggr = knxAggr
+        # self.zigTrans = zigTrans
+
+    def updateOccurred(self, srcAddr, val):
+        """
+        takes value from KNX and sends it to ZigBee device
+        """
+        knxSrc = printGroup(self.gaddrInt)
+
+        val = int(printValue(val, len(val)), 16)
+
+        # transform data from python to zigbee protocol adequate form
+        zbValue = zigbee_utils.getZigBeeValue(self.zbFormat, val)
+
+        # sends update to zigbee device
+        if self.zbClient.setAttribute(attr=self.zbAttr, val=zbValue):
+            log('info',
+                'Value updated based on KNX value change {0}({1}): {2}(KNX value: {3}) for ZigBee client {4}'.format(
+                    self.attrName, knxSrc,
+                    zbValue, val,
+                    self.zbClient.uniqueID))
+        else:
+            log('error',
+                'Value could not be updated based on KNX value change {0}({1}): {2}(KNX value: {3}) for ZigBee client {4}'.format(
+                    self.attrName, knxSrc,
+                    zbValue, val,
+                    self.zbClient.uniqueID))

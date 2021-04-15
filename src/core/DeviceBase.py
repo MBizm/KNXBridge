@@ -1,6 +1,7 @@
 import os
 
 from EIBClient import EIBClientFactory
+from common import readHex
 from core import Functions
 from core.util.BasicUtil import log
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
@@ -27,15 +28,46 @@ class KNXGateway:
 
 
 class KNXDDevice:
-    """ allows the interaction with the KNX representation via KNXD Gateway """
+    """
+    abstract device implementation allowing interaction with EIB/KNX client (https://github.com/MBizm/KNXPClient)
+    derive all endpoint device class (zigbee, modbus, ...) from this class
+    use KNX read/write methods for interaction with the KNX device
+    """
 
     #########################################
     #   KNX specific methods, read/write    #
     #########################################
-    def readKNXAttribute(self):
-        """ reads values via the KNXD command line tool """
-        # TODO implementation
-        pass
+    def readKNXAttribute(self, attrName, knxSrc, knxFormat, function=None):
+        """
+        reads values via EIB/KNX client
+        :returns    pythonic value from bus
+        """
+        val = None
+
+        dpt = EIBClientFactory().getClient().GroupCache_Read(knxSrc)
+
+        # convert value from string representation into hex
+        dpt = int(dpt, 16)
+
+        # get DPT implementation for python type conversion
+        dc = DPTXlatorFactoryFacade().create(knxFormat)
+
+        try:
+            if dc.checkData(dpt):
+                val = dc.dataToValue(dpt)
+
+                log('info',
+                    f'Value retrieved (group cache) "{attrName}"[{knxSrc}] value={val}({dpt})')
+        except DPTXlatorValueError as ex:
+            # log failure
+            log('error',
+                f'Value could not be read "{attrName}"[{knxSrc}] value={dpt} - Check type definition for DPT type "{knxFormat}" and value "{dpt}" - {ex}')
+        except (TypeError, ValueError) as ex:
+            # log failure
+            log('error',
+                f'Value could not be read "{attrName}"[{knxSrc}] value={dpt} - {ex}')
+
+        return val
 
     def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None) -> bool:
         """
@@ -87,7 +119,8 @@ class KNXDDevice:
         """ calls Functions library, overwrite in case of client specific behavior required """
         return Functions.executeFunction(dpt, function, val)
 
-    def isCurrentKNXAttribute(self, knxDest, knxFormat, newVal) -> bool:
+    @staticmethod
+    def isCurrentKNXAttribute(knxDest, knxFormat, newVal) -> bool:
         """
         checks whether new value matches to stored value last sent on the bus
         :param knxFormat:   DPT format that is expected for the given destination
@@ -95,16 +128,23 @@ class KNXDDevice:
         :param newVal:      value in dpt representation
         :returns            true if new value matches cached value
         """
-        curKNXVal = EIBClientFactory().getClient().GroupCache_Read(knxDest)
+        ret = False
+        try:
+            curKNXVal = EIBClientFactory().getClient().GroupCache_Read(knxDest)
 
-        if len(newVal) == 1 and len(curKNXVal) == 2:
-            curKNXVal = curKNXVal[1:]
+            if len(newVal) == 1 and len(curKNXVal) == 2:
+                curKNXVal = curKNXVal[1:]
 
-        return curKNXVal.upper() == newVal.upper()
+            ret = curKNXVal.upper() == newVal.upper()
+        except ValueError as ex:
+            log('warning',
+                'Value comparison failed - {ex}')
+        return ret
 
-    #########################################
-    #   custom client methods, read/write   #
-    #########################################
+    #################################################
+    #   target client methods, read/write           #
+    #   target client may be modbus, zigbee, ...    #
+    #################################################
     def getAttribute(self, name, format, attr):
         """ retrieves the value from specific client and converts it into python datatype"""
         raise NotImplementedError

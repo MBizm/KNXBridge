@@ -29,7 +29,8 @@
 from threading import Timer
 from typing import Dict
 
-from core.DeviceKNXDBase import KNXGateway
+from core.DeviceBase import KNXGateway
+from core.DeviceKNX import KNX2KNXClient
 from core.DeviceModBus import ModBusClient
 from core.DeviceZigBee import ZigBeeClient, ZigBeeGateway
 from core.util.BasicUtil import readConfig, setLogLevel, getAttrSafe, log
@@ -98,8 +99,31 @@ class KNXWriter:
         # iterate list of attributes to be updated
         for attr in self.attrs:
 
+            # first time initialization steps
+            if UPDATEFREQ['initial'] & freq == UPDATEFREQ['initial']:
+                # setup knx-based event trigger based on EIB/KNX client listener
+                # ModBus - currently not implemented
+                if attr['type'] == 'knx2modbus':
+                    raise NotImplementedError
+                # set up ZigBee listener
+                elif attr['type'] == 'knx2zigbee':
+                    # find corresponding ZigBee device
+                    if attr['zigbeeApplID'] in self.zigbeeClients:
+                        client = self.zigbeeClients[attr['zigbeeApplID']]
+                        client.installListener(attr['name'],
+                                               attr['knxAddr'], attr['knxFormat'],
+                                               attr['zigbeeAttr'], attr['zigbeeFormat'],
+                                               getAttrSafe(attr, 'zigbeeSection'))
+                elif attr['type'] == 'knx2knx':
+                    # knx2knx devices require dedicated handling only as part of the registration for KNX bus monitoring
+                    # create client here without keeping handle to the instance
+                    client = KNX2KNXClient()
+                    client.installListener(attr['name'],
+                                           attr['knxAddr'], attr['knxFormat'],
+                                           attr['knxDest'], getAttrSafe(attr, 'function'))
+
             # check attribute update frequency matches current thread definition
-            if UPDATEFREQ[attr['updFreq']] & freq > 0:
+            if 'updFreq' in attr and UPDATEFREQ[attr['updFreq']] & freq > 0:
 
                 client = None
                 newVal = None
@@ -125,16 +149,10 @@ class KNXWriter:
                         client = self.zigbeeClients[attr['zigbeeApplID']]
 
                         # get latest ZigBee value for attribute
-                        # check for optional parameter zigbeeSection - default will be 'state'
-                        if 'zigbeeSection' in attr:
-                            newVal = client.getAttribute(attr['name'],
-                                                         attr['zigbeeFormat'],
-                                                         attr['zigbeeAttr'],
-                                                         attr['zigbeeSection'])
-                        else:
-                            newVal = client.getAttribute(attr['name'],
-                                                         attr['zigbeeFormat'],
-                                                         attr['zigbeeAttr'])
+                        newVal = client.getAttribute(attr['name'],
+                                                     attr['zigbeeFormat'],
+                                                     attr['zigbeeAttr'],
+                                                     getAttrSafe(attr, 'zigbeeSection'))
                     else:
                         log('error',
                             'Configuration error - zigbeeApplID({0}) not defined'.format(attr['zigbeeApplID']))
