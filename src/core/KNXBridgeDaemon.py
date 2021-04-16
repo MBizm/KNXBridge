@@ -15,10 +15,10 @@
 #           -- knxdIP represents the IP/KNX bus devices IP
 #     - attributes:
 #           -- list of attributes transferred between the ModBus appliance and the KNX bus
-#           -- script currently only supports ModBus-READ and KNX-WRITE instructions, defined by [type] value "modbus2knx" (TODO)
-#           -- [modbusAddrDec] defines the ModBus address in decimal representation, [modbusFormat] the ModBus attribute data type - currently only "float" is supported (TODO)
+#           -- script currently only supports ModBus-READ and KNX-WRITE instructions, defined by [type] value "modbus2knx"
+#           -- [modbusAddrDec] defines the ModBus address in decimal representation, [modbusFormat] the ModBus attribute data type - currently only "float" is supported
 #           -- [modbusAddrDec] allows the automatic calculation of the sum of several ModBus addresses by "[addr1, addr2]" representation
-#           -- [knxAddr] defines the KNX address in "x/y/z" notation, [knxFormat] the KNX DPT data type - currently only "DPT14" is supported (TODO)
+#           -- [knxAddr] defines the KNX address in "x/y/z" notation, [knxFormat] the KNX DPT data type
 #           -- [updFreq] defines the frequency the attribute is updated:
 #               --- "very high"   - updates once every 10sec, be careful not to flood the bus with too many requests
 #               --- "high"        - updates once every minute
@@ -129,7 +129,6 @@ class KNXWriter:
                 newVal = None
 
                 # check update type - currently only modbus read, knx write is supported
-                # TODO have client selection and getAttribute call generalized
                 if attr['type'] == 'modbus2knx':
                     # find corresponding ModBus device
                     if attr['modbusApplID'] in self.modbusClients:

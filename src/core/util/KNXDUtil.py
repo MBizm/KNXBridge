@@ -48,7 +48,6 @@ class DPTXlatorBaseFacade(DPTXlatorBase):
         """
         ret = self.__dptimpl.valueToData(value)
         if not isinstance(ret, (int, float)):
-            # TODO how to deal with other data types?
             log('error',
                 "KNXUtil.valueToData() - Data type {0} not yet implemented".format(type(value)))
             raise NotImplementedError
