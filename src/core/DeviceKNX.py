@@ -27,8 +27,8 @@ class KNX2KNXClient(KNXDDevice):
                      dest: str, format: str,
                      function: str):
         # reuse base implementation to write value to bus with destination target
-        self.writeKNXAttribute(attrName, dest, format,
-                               val, function)
+        return self.writeKNXAttribute(attrName, dest, format,
+                                      val, function)
 
     def installListener(self, attrName: str,
                         knxSrc: str, knxFormat: str,
