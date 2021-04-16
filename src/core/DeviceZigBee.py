@@ -62,7 +62,11 @@ class ZigBeeGateway:
             self.getState()
 
         try:
-            ret = ZigBeeGateway.__state[type][str(id)][section][attr]
+            # section can be omitted by specifying >>zigbeeSection: ''<< in configuration
+            if len(section) > 0:
+                ret = ZigBeeGateway.__state[type][str(id)][section][attr]
+            else:
+                ret = ZigBeeGateway.__state[type][str(id)][attr]
         except KeyError as ex:
             log('error',
                 'Configuration error - attribute "{0}" in section "{1}" for deConzID "{2}" type "{3}" not defined: {4}'.format(

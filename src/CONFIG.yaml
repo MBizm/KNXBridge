@@ -167,7 +167,7 @@ attributes:
     zigbeeApplID:   1a
     zigbeeAttr:     "lastupdated"
     zigbeeFormat:   "date"
-    function:       "timechg(3600), timedelta(1800)"
+    function:       "timedeltaGT(1800)"
     knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
     knxFormat:      "1.002"
     updFreq:        "medium"
@@ -216,7 +216,7 @@ attributes:
     zigbeeApplID:   2a
     zigbeeAttr:     "lastupdated"
     zigbeeFormat:   "date"
-    function:       "timechg(3600), timedelta(900)"
+    function:       "timedeltaGT(900)"
     knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
     knxFormat:      "1.002"
     updFreq:        "medium"

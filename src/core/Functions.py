@@ -1,7 +1,8 @@
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import dateparser as dateparser
+import pytz
 
 from core.util.BasicUtil import log
 
@@ -83,12 +84,18 @@ def __executeFunctionImpl(dpt, function, val):
         """
         try:
             errDetail = 'wrong function definition'
-            delta = abs(int(function[10:-1]))
+            delta = abs(int(function[12:-1]))
             errDetail = 'wrong value type (date cannot be parsed)'
-            val = timedelta(seconds=delta) < abs(datetime.now() - dateparser.parse(val))
+            # retrieve both date value and set them to UTC for comparison
+            timenow = datetime.now(timezone.utc)
+            clienttime = dateparser.parse(val)
+            if function[9:11] == 'LT':
+                val = timedelta(seconds=delta) > abs(timenow - clienttime)
+            elif function[9:11] == 'GT':
+                val = timedelta(seconds=delta) < abs(timenow - clienttime)
             errDetail = None
-        except ValueError:
-            pass
+        except ValueError as ex:
+            errDetail += str(ex)
     elif function[:7] == 'timechg':
         """ 
         adds/deducts the defined delta in seconds to given date
