@@ -11,5 +11,6 @@ class zigbee_utils:
         if zigFormat == "boolean":
             ret = bool(val)
         if zigFormat == "int":
-            ret = int(val, 16)
+            # nothing to do here - val is already int representation of hex
+            ret = val
         return ret

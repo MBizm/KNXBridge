@@ -138,7 +138,7 @@ class KNXDDevice:
             ret = curKNXVal.upper() == newVal.upper()
         except ValueError as ex:
             log('warning',
-                'Value comparison failed - {ex}')
+                'Value comparison failed - {0}'.format(ex))
         return ret
 
     #################################################

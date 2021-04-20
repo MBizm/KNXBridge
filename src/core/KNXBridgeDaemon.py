@@ -37,11 +37,12 @@ from core.util.BasicUtil import readConfig, setLogLevel, getAttrSafe, log
 
 # dictionary for update frequency mask
 UPDATEFREQ: Dict[str, int] = {
-    "very high":    0x01,
-    "high":         0x02,
-    "medium":       0x04,
-    "low":          0x08,
-    "very low":     0x10,
+    "critical":     0x01,
+    "very high":    0x02,
+    "high":         0x04,
+    "medium":       0x08,
+    "low":          0x10,
+    "very low":     0x20,
     "initial":      0xFF
 }
 
@@ -167,6 +168,10 @@ class KNXWriter:
         # run periodically update of values - each update frequency initiating its own thread
         # initial run by main will initiate all threads at once
         ut = None
+        if freq & UPDATEFREQ['critical'] > 0:
+            # CRITICAL - runs every 3 seconds - ONLY USE IN EXCEPTIONABLE CASES!!
+            ut = Timer(3, gateway.update, (UPDATEFREQ['critical'],))
+            ut.start()
         if freq & UPDATEFREQ['very high'] > 0:
             # VERY HIGH - runs every 10 seconds
             ut = Timer(10, gateway.update, (UPDATEFREQ['very high'],))
