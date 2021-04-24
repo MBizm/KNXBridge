@@ -160,7 +160,7 @@ class ZigBeeClient(KNXDDevice):
     #########################################
     #           overridden KNX methods      #
     #########################################
-    def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None) -> bool:
+    def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None, flags=None) -> bool:
         """ adds additional reachable check for client """
         ret = None
         if self.reachable:
@@ -168,7 +168,8 @@ class ZigBeeClient(KNXDDevice):
                                             knxDest,
                                             knxFormat,
                                             val,
-                                            function)
+                                            function,
+                                            flags)
         else:
             log('error',
                 'Could not connect to ZigBee client {0}[{1}]'.format(attrName,

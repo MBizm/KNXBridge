@@ -163,7 +163,8 @@ class KNXWriter:
                                              attr['knxAddr'],
                                              attr['knxFormat'],
                                              newVal,
-                                             getAttrSafe(attr, 'function'))
+                                             getAttrSafe(attr, 'function'),
+                                             getAttrSafe(attr, 'flags'))
 
         # run periodically update of values - each update frequency initiating its own thread
         # initial run by main will initiate all threads at once

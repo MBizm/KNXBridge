@@ -2,7 +2,7 @@ import os
 
 from EIBClient import EIBClientFactory
 from common import readHex
-from core import Functions
+from core import Functions, Flags
 from core.util.BasicUtil import log
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
 from pknyx.core.dptXlator.dptXlatorBase import DPTXlatorValueError
@@ -69,7 +69,7 @@ class KNXDDevice:
 
         return val
 
-    def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None) -> bool:
+    def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None, flags=None) -> bool:
         """
         writes values via the KNXD command line tool
         :returns true if successful
@@ -100,14 +100,20 @@ class KNXDDevice:
             return False
 
         # do not load the bus with unnecessary request, check against cached value
-        if not self.isCurrentKNXAttribute(knxDest, knxFormat, dpt):
+        if (flags and Flags.FLAGS_FORCE in flags) or \
+                not self.isCurrentKNXAttribute(knxDest, knxFormat, dpt):
             # send value to the knx bus
             os.popen('knxtool groupwrite ip:{0} {1} {2}'.format(KNXGateway().hostIP,
                                                                 knxDest,
                                                                 dpt))
+
             # log success
-            log('change',
-                f'Updated value on KNX bus "{attrName}"[{knxDest}] value={val}[DPT:{dpt}]')
+            if flags and Flags.FLAGS_FORCE in flags:
+                log('change',
+                    f'Updated value (enforced) on KNX bus "{attrName}"[{knxDest}] value={val}[DPT:{dpt}]')
+            else:
+                log('change',
+                    f'Updated value on KNX bus "{attrName}"[{knxDest}] value={val}[DPT:{dpt}]')
         else:
             # log success
             log('info',
