@@ -43,7 +43,7 @@ class ModBusClient(KNXDDevice):
         else:
             # log connection error
             log('error',
-                'Could not connect to ModBus client {0}:{1}'.format(self.__mbcImpl.host,
+                'Could not connect to ModBus server {0}:{1}'.format(self.__mbcImpl.host,
                                                                     self.__mbcImpl.port))
 
         return val

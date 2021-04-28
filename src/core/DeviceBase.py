@@ -1,7 +1,6 @@
 import os
 
 from EIBClient import EIBClientFactory
-from common import readHex
 from core import Functions, Flags
 from core.util.BasicUtil import log
 from core.util.KNXDUtil import DPTXlatorFactoryFacade

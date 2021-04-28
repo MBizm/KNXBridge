@@ -31,19 +31,20 @@ from typing import Dict
 
 from core.DeviceBase import KNXGateway
 from core.DeviceKNX import KNX2KNXClient
+from core.DeviceMQTT import MQTTAppliance
 from core.DeviceModBus import ModBusClient
 from core.DeviceZigBee import ZigBeeClient, ZigBeeGateway
 from core.util.BasicUtil import readConfig, setLogLevel, getAttrSafe, log
 
 # dictionary for update frequency mask
 UPDATEFREQ: Dict[str, int] = {
-    "critical":     0x01,
-    "very high":    0x02,
-    "high":         0x04,
-    "medium":       0x08,
-    "low":          0x10,
-    "very low":     0x20,
-    "initial":      0xFF
+    "critical": 0x01,
+    "very high": 0x02,
+    "high": 0x04,
+    "medium": 0x08,
+    "low": 0x10,
+    "very low": 0x20,
+    "initial": 0xFF
 }
 
 
@@ -72,6 +73,16 @@ class KNXWriter:
         for cc in configuration['modbusAppliance']:
             self.modbusClients[cc['modbusApplID']] = ModBusClient(cc['modbusIP'],
                                                                   cc['modbusPort'])
+
+        # build up list of defined MQTT appliance
+        # due to the self-contained (threaded) architecture of MQTT client, MQTT clients
+        # will be set up in initialization as part of update method
+        self.mqttAppliances = {}
+        for cc in configuration['mqttAppliance']:
+            self.mqttAppliances[cc['mqttApplID']] = MQTTAppliance(cc['mqttIP'],
+                                                                       getAttrSafe(configuration, 'mqttPort'),
+                                                                       getAttrSafe(configuration, 'mqttUser'),
+                                                                       getAttrSafe(configuration, 'mqttPasswd'))
 
         # build up list of defined zigbee devices
         self.zigbeeClients = {}
@@ -122,6 +133,14 @@ class KNXWriter:
                     client.installListener(attr['name'],
                                            attr['knxAddr'], attr['knxFormat'],
                                            attr['knxDest'], getAttrSafe(attr, 'function'))
+                elif attr['type'] == 'mqtt2knx':
+                    # mqtt client defines its own thread which permanently listens to update events
+                    # avoid registering to targets which flood your KNX bus due to high frequency of update
+                    if attr['mqttApplID'] in self.mqttAppliances:
+                        appliance = self.mqttAppliances[attr['mqttApplID']]
+                        appliance.setupClient(attr['name'], attr['mqttTopic'],
+                                              attr['knxAddr'], attr['knxFormat'],
+                                              getAttrSafe(attr, 'function'))
 
             # check attribute update frequency matches current thread definition
             if 'updFreq' in attr and UPDATEFREQ[attr['updFreq']] & freq > 0:

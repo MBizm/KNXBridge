@@ -62,6 +62,15 @@ modbusAppliance:
 #    modbusIP:     <ENTER YOUR IP HERE>
 #    modbusPort:   "1502"
 
+# maintain MQTT Broker information
+mqttAppliance:
+  - mqttApplID:   100
+    mqttName:     "Central MQTT Broker Instance"
+    mqttIP:       <ENTER YOUR IP HERE>
+#    mqttPort:      "1883"
+#    mqttUser:      "myUser"
+#    mqttPasswd:    "myPasswd"
+
 # maintain ZigBee client information
 # some client may have multiple entries if mapped to multiple types (e.g. smoke sensor - light and sensor)
 zigbeeAppliance:
@@ -134,6 +143,16 @@ attributes:
     knxFormat:      "14.056"
     updFreq:        "very high"
 
+  ####################
+  #   MQTT clients   #
+  ####################
+  - name:           " Waterflow sensor"
+    type:           "mqtt2knx"
+    mqttApplID:     "100"
+    mqttTopic:      "/waterflow"
+#    function:       "lt(10)"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "14.077"   # liter/sec
 
   #   Garage Gate Sensore   #
   - name:           "Garage Gate Closing State"
