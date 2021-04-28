@@ -1,10 +1,10 @@
 [Unit]
-Description=ModBus2KNX Gateway Daemon
+Description=KNXBridge Daemon
 After=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/python3 /usr/bin/KNXBridge/core/ModBusDaemon.py
+ExecStart=/usr/bin/python3 /usr/bin/KNXBridge/core/KNXBridgeDaemon.py
 WorkingDirectory=/home/pi/.knx/bridge/
 
 [Install]
