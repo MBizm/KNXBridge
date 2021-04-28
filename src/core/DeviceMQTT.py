@@ -12,10 +12,10 @@ class MQTTAppliance():
         self.user = user
         self.pwd = passwd
 
-    def setupClient(self, name, topic, knxAddr, knxFormat, function=None):
+    def setupClient(self, name, topic, knxAddr, knxFormat, function=None, flags=None):
         client = _MQTTClient(self.host, self.port, self.user, self.pwd,
                              name, topic,
-                             knxAddr, knxFormat, function)
+                             knxAddr, knxFormat, function, flags)
         client.start()
 
 
@@ -26,13 +26,14 @@ class _MQTTClient(KNXDDevice):
     """
     def __init__(self, host, port, user, passwd,
                  name, topic,
-                 knxDest, knxFormat, function):
+                 knxDest, knxFormat, function, flags):
         super(_MQTTClient, self).__init__()
 
         self.attrName = name
         self.knxDest = knxDest
         self.knxFormat = knxFormat
         self.function = function
+        self.flags = flags
 
         # set up MQTT client connection to broker
         self.client = mqtt.Client("KNXBridgeDaemon")
@@ -62,4 +63,4 @@ class _MQTTClient(KNXDDevice):
 
     def updateReceived(self, client, userdata, message):
         super().writeKNXAttribute(self.attrName, self.knxDest, self.knxFormat,
-                                  float(message.payload.decode("utf-8")), function=self.function, flags=None)
+                                  float(message.payload.decode("utf-8")), function=self.function, flags=self.flags)

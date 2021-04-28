@@ -140,7 +140,8 @@ class KNXWriter:
                         appliance = self.mqttAppliances[attr['mqttApplID']]
                         appliance.setupClient(attr['name'], attr['mqttTopic'],
                                               attr['knxAddr'], attr['knxFormat'],
-                                              getAttrSafe(attr, 'function'))
+                                              getAttrSafe(attr, 'function'),
+                                              getAttrSafe(attr, 'flags'))
 
             # check attribute update frequency matches current thread definition
             if 'updFreq' in attr and UPDATEFREQ[attr['updFreq']] & freq > 0:
