@@ -82,6 +82,11 @@ class KNXDDevice:
         if function:
             val = self.performFunction(dc.dpt, function, val)
 
+        # check value, some functions like an exclusive equal comparison may return None
+        # for valid reason with no further write action to be performed
+        if val is None:
+            return False
+
         # convert to DPT representation
         try:
             if dc.checkValue(val):
@@ -95,7 +100,7 @@ class KNXDDevice:
             log('error',
                 f'Value could not be updated "{attrName}"[{knxDest}] value={val} - {ex}')
 
-        if not dpt:
+        if dpt is None:
             return False
 
         # do not load the bus with unnecessary request, check against cached value
