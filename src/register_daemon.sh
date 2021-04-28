@@ -7,6 +7,7 @@
 ###############################################################################################################
 
 # set up folder for error log
+mkdir ~/.knx
 mkdir ~/.knx/bridge
 # copy configuration
 cp CONFIG.yaml ~/.knx/bridge/CONFIG.yaml
