@@ -2,12 +2,11 @@ import re
 from datetime import datetime, timedelta, timezone
 
 import dateparser as dateparser
-import pytz
 
 from core.util.BasicUtil import log
 
 
-def executeFunction(dpt, function, val):
+def executeFunction(deviceInstance, dpt, function, val):
     """
     performs the selected functions val and returns the outcome. functions can be chained by givign a comma
     or semicolon separated list being processed from left to right
@@ -23,12 +22,12 @@ def executeFunction(dpt, function, val):
     for i in range(0, len(tok)):
         # None values might be set by functions, no further processing in these cases
         if len(tok[i]) > 0 and val is not None:
-            val = __executeFunctionImpl(dpt, tok[i], val)
+            val = __executeFunctionImpl(deviceInstance, dpt, tok[i], val)
 
     return val
 
 
-def __executeFunctionImpl(dpt, function, val):
+def __executeFunctionImpl(deviceInstance, dpt, function, val):
     errDetail = None
     if function[:3] == 'val':
         # replace current value by static value
@@ -43,6 +42,33 @@ def __executeFunctionImpl(dpt, function, val):
             val = not val
         else:
             errDetail = 'wrong value type'
+    elif function[:3] == 'max':
+        # returns the greater value, useful for greater 0 assurancce
+        if isinstance(val, (int, float)):
+            try:
+                val = max(val, function[4:-1])
+            except ValueError:
+                errDetail = 'wrong function definition'
+        else:
+            errDetail = 'wrong value type'
+    elif function[:3] == 'min':
+        # returns the lower value
+        if isinstance(val, (int, float)):
+            try:
+                val = min(val, function[4:-1])
+            except ValueError:
+                errDetail = 'wrong function definition'
+        else:
+            errDetail = 'wrong value type'
+    elif function[:3] == 'rnd':
+        # rounds the current value to the given precision
+        if isinstance(val, (int, float)):
+            try:
+                val = round(val, function[4:-1])
+            except ValueError:
+                errDetail = 'wrong function definition'
+        else:
+            errDetail = 'wrong value type'
     elif function[:3] == 'div':
         # divide current value by given value
         if isinstance(val, (int, float)):
@@ -51,7 +77,10 @@ def __executeFunctionImpl(dpt, function, val):
                 if div is not 0:
                     val = val / div
                 else:
-                    errDetail = 'divider is zero'
+                    if float(function[4:-1]) == 0:
+                        errDetail = 'divider is zero'
+                    else:
+                        errDetail = 'wrong function definition'
             except ValueError:
                 errDetail = 'wrong function definition'
         else:
@@ -62,6 +91,26 @@ def __executeFunctionImpl(dpt, function, val):
             try:
                 div = float(function[4:-1])
                 val = val * div
+            except ValueError:
+                errDetail = 'wrong function definition'
+        else:
+            errDetail = 'wrong value type'
+    elif function[:3] == 'add':
+        # adds given value to current value
+        if isinstance(val, (int, float)):
+            try:
+                div = float(function[4:-1])
+                val = val + div
+            except ValueError:
+                errDetail = 'wrong function definition'
+        else:
+            errDetail = 'wrong value type'
+    elif function[:3] == 'sub':
+        # substracts given value from current value
+        if isinstance(val, (int, float)):
+            try:
+                div = float(function[4:-1])
+                val = val - div
             except ValueError:
                 errDetail = 'wrong function definition'
         else:

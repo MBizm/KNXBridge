@@ -127,7 +127,7 @@ class KNXDDevice:
 
     def performFunction(self, dpt, function, val):
         """ calls Functions library, overwrite in case of client specific behavior required """
-        return Functions.executeFunction(dpt, function, val)
+        return Functions.executeFunction(self, dpt, function, val)
 
     @staticmethod
     def isCurrentKNXAttribute(knxDest, knxFormat, newVal) -> bool:
