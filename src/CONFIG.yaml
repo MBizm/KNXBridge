@@ -1,37 +1,17 @@
 #####################################################################################################################
 #
-#   ModBus-KNX Gateway script - sending data via simple configuration
+#   KNXBridge template configuration file
 #   The script and the configuration file are provided under Apache 2.0 license.
 #   Author: MBizm [https://github.com/MBizm]
 #
-#   The ModBus-KNX Gatway sends data from a ModBus appliance to KNX. It is based on the IP/KNX Gateway device with an installed KNXD library.
-#   All configuration can be done via the CONFIG.yaml file. Follow the below instruction. The configuration file contains the following sections:
-#     -config section:
-#           -- general configurations for executing the script
-#           -- define your intended logging level here ("off", "error", "info") with "info" providing information about each sent attribute
-#     - modbusAppliance:
-#           -- defines all physical appliances that shall be linked. The script supports multiple ModBus devices as source for data sent to the KNX bus.
-#           -- Attributes are linked via the [modbusApplID] attribute id that every attribute needs to define
-#           -- knxdIP represents the IP/KNX bus devices IP
-#     - attributes:
-#           -- list of attributes transferred between the ModBus appliance and the KNX bus
-#           -- script currently only supports ModBus-READ and KNX-WRITE instructions, defined by [type] value "modbus2knx"
-#           -- [modbusAddrDec] defines the ModBus address in decimal representation, [modbusFormat] the ModBus attribute data type - currently only "float" is supported
-#           -- [modbusAddrDec] allows the automatic calculation of the sum of several ModBus addresses by "[addr1, addr2]" representation
-#           -- [knxAddr] defines the KNX address in "x/y/z" notation, [knxFormat] the KNX DPT data type
-#           -- [updFreq] defines the frequency the attribute is updated for modbus2knx, zigbee2knx scenarios (does not apply for knx2zigbee scenario):
-#               --- "very high"   - updates once every 10sec, be careful not to flood the bus with too many requests
-#               --- "high"        - updates once every minute
-#               --- "medium"      - updates once every 10 minutes
-#               --- "low"         - updates once every hour
-#               --- "very low"    - updates once every 24hours
+#   See detailed explanation here: https://github.com/MBizm/KNXBridge/blob/main/README.md
 #
 #####################################################################################################################
 
 configSet:  KNX Bridge for Modbus and ZigBee configuration
 configNote: >
-  Maintain your configuration for your devices to be linked here. ModBus data retrieved will be forwarded to corresponding KNX address. Multiple ModBus appliance can be configured.
-  First section covers ModBus and KNX endpoint information, second section will list attributes that gateway shall update.
+  The configuration file declaring the client and their respective attributes to be exchanged is located in *~/.knx/bridge/CONFIG.yaml*.
+  Folder and initial configuration template will be created by installation script.
 configVersion:  0.3
 configVerbose:  "info"
 
@@ -42,7 +22,7 @@ configVerbose:  "info"
 knxdAppliance:
   knxdIP:     <ENTER YOUR IP HERE>
 
-# uncomment if ZigBee Gateway is not available
+# comment if ZigBee Gateway is not available
 deconzAppliance:
     deConzIP:     <ENTER YOUR IP HERE>
     deConzPort:   <ENTER YOUR PORT HERE>
@@ -148,7 +128,7 @@ attributes:
   ####################
   - name:           " Waterflow sensor"
     type:           "mqtt2knx"
-    mqttApplID:     "100"
+    mqttApplID:     100
     mqttTopic:      "/waterflow"
 #    function:       "lt(10)"
     knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
