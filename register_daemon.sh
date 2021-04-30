@@ -14,7 +14,7 @@ cp CONFIG.yaml ~/.knx/bridge/CONFIG.yaml
 echo "Updated daemon configuration file: ~/.knx/bridge/CONFIG.yaml"
 # copy daemon script
 sudo mkdir /usr/bin/KNXBridge
-sudo cp core /usr/bin/KNXBridge
+sudo cp ./src/core /usr/bin/KNXBridge
 # copy service definition
 sudo cp KNXBridgeDaemon.service /lib/systemd/system/KNXBridgeDaemon.service
 
