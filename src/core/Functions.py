@@ -10,6 +10,8 @@ def executeFunction(deviceInstance, dpt, function, val):
     """
     performs the selected functions val and returns the outcome. functions can be chained by givign a comma
     or semicolon separated list being processed from left to right
+    :param deviceInstance:      KNXDDevice instance for knx value callbacks, type hint not specified due to import loop
+    :returns val of corresponding type after function execution
     """
     if not function:
         return val
@@ -108,9 +110,13 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val):
     elif function[:3] == 'sub':
         # substracts given value from current value
         if isinstance(val, (int, float)):
+            gv = function[4:-1]
+            # check for live KNX value
+            if gv[:1] == '/':
+                deviceInstance.readKNXAttribute("functions live value",
+                                                gv, dpt)
             try:
-                div = float(function[4:-1])
-                val = val - div
+                val = val - float(gv)
             except ValueError:
                 errDetail = 'wrong function definition'
         else:

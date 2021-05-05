@@ -2,6 +2,7 @@ from EIBClient import EIBClientFactory, EIBClientListener
 from common import printGroup, printValue
 from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
+from core.util.KNXDUtil import DPTXlatorFactoryFacade
 
 
 class KNX2KNXClient(KNXDDevice):
@@ -66,14 +67,21 @@ class KNX2KNXClientListener(EIBClientListener):
         """
         knxSrc = printGroup(self.gaddrInt)
 
+        # get DPT implementation
+        # dc = DPTXlatorFactoryFacade().create(self.knxFormat)
+
+        # if dc.checkFrame(val):
+        #     val = dc.frameToData(val)
+
         val = int(printValue(val, len(val)), 16)
 
         # currently no conversion from one DPT type to another is foreseen
 
         # sends update to the other knx device
-        if self.knxClient.setAttribute(attrName=self.attrName, val=val,
-                                       dest=self.knxDest, format=self.knxFormat,
-                                       function=self.function):
+        if val is not None and \
+                self.knxClient.setAttribute(attrName=self.attrName, val=val,
+                                            dest=self.knxDest, format=self.knxFormat,
+                                            function=self.function):
             log('info',
                 'Value updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(self.attrName, knxSrc,
                                                                                                   val, self.knxDest))
