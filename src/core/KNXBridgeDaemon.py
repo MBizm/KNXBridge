@@ -80,9 +80,9 @@ class KNXWriter:
         self.mqttAppliances = {}
         for cc in configuration['mqttAppliance']:
             self.mqttAppliances[cc['mqttApplID']] = MQTTAppliance(cc['mqttIP'],
-                                                                       getAttrSafe(configuration, 'mqttPort'),
-                                                                       getAttrSafe(configuration, 'mqttUser'),
-                                                                       getAttrSafe(configuration, 'mqttPasswd'))
+                                                                  getAttrSafe(cc, 'mqttPort'),
+                                                                  getAttrSafe(cc, 'mqttUser'),
+                                                                  getAttrSafe(cc, 'mqttPasswd'))
 
         # build up list of defined zigbee devices
         self.zigbeeClients = {}
