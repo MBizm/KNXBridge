@@ -78,3 +78,33 @@ def getAttrSafe(attr, key):
         ret = attr[key]
 
     return ret
+
+#################################
+#   Numeric helper methods      #
+#################################
+def is_number(val):
+    if isinstance(val, (int, float)):
+        return True
+    else:
+        try:
+            float(val)
+            return True
+        except ValueError:
+            return False
+    return False
+
+
+def is_bool(val):
+    if isinstance(val, bool):
+        return True
+    elif val == "True" or val == "False":
+        return True
+    return False
+
+def convert_number(val):
+    if isinstance(val, str):
+        if val.isdigit():
+            val = int(val)
+        else:
+            val = float(val)
+    return val

@@ -36,7 +36,7 @@ class _MQTTClient(KNXDDevice):
         self.flags = flags
 
         # set up MQTT client connection to broker
-        self.client = mqtt.Client("KNXBridgeDaemon")
+        self.client = mqtt.Client("KNXBridgeDaemon-"+name)
         self.client.on_message = self.updateReceived
         # authenticate
         if user and passwd:
@@ -63,4 +63,4 @@ class _MQTTClient(KNXDDevice):
 
     def updateReceived(self, client, userdata, message):
         super().writeKNXAttribute(self.attrName, self.knxDest, self.knxFormat,
-                                  float(message.payload.decode("utf-8")), function=self.function, flags=self.flags)
+                                  message.payload.decode("utf-8"), function=self.function, flags=self.flags)

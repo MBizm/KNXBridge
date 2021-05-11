@@ -2,7 +2,7 @@ import os
 
 from EIBClient import EIBClientFactory
 from core import Functions, Flags
-from core.util.BasicUtil import log
+from core.util.BasicUtil import log, is_number, convert_number, is_bool
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
 from pknyx.core.dptXlator.dptXlatorBase import DPTXlatorValueError
 
@@ -68,7 +68,9 @@ class KNXDDevice:
 
         return val
 
-    def writeKNXAttribute(self, attrName, knxDest, knxFormat, val, function=None, flags=None) -> bool:
+    def writeKNXAttribute(self, attrName:str,
+                          knxDest:str, knxFormat:str,
+                          val, function=None, flags=None) -> bool:
         """
         writes values via the KNXD command line tool
         :returns true if successful
@@ -145,7 +147,21 @@ class KNXDDevice:
             if len(newVal) == 1 and len(curKNXVal) == 2:
                 curKNXVal = curKNXVal[1:]
 
-            ret = curKNXVal.upper() == newVal.upper()
+            curKNXVal = curKNXVal.upper().strip()
+            newVal = newVal.upper().strip()
+
+            # normalize numeric and boolean values
+            if is_number(curKNXVal):
+                curKNXVal = convert_number(curKNXVal)
+            elif is_bool(curKNXVal):
+                curKNXVal = bool(curKNXVal)
+            if is_number(newVal):
+                newVal = convert_number(newVal)
+            elif is_bool(newVal):
+                newVal = bool(newVal)
+
+            # compare normalized values
+            ret = curKNXVal == newVal
         except ValueError as ex:
             log('warning',
                 'Value comparison failed - {0}'.format(ex))
