@@ -82,7 +82,8 @@ class KNXDDevice:
 
         # perform transformations if defined before sending to bus
         if function:
-            val = self.performFunction(dc.dpt, function, val)
+            val = self.performFunction(dc.dpt, function, val,
+                                       attrName, knxDest, knxFormat)
 
         # check value, some functions like an exclusive equal comparison may return None
         # for valid reason with no further write action to be performed
@@ -127,9 +128,11 @@ class KNXDDevice:
 
         return True
 
-    def performFunction(self, dpt, function, val):
+    def performFunction(self, dpt, function, val,
+                        attrName, knxDest, knxFormat):
         """ calls Functions library, overwrite in case of client specific behavior required """
-        return Functions.executeFunction(self, dpt, function, val)
+        return Functions.executeFunction(self, dpt, function, val,
+                                         attrName, knxDest, knxFormat)
 
     @staticmethod
     def isCurrentKNXAttribute(knxDest, knxFormat, newVal) -> bool:

@@ -204,7 +204,13 @@ class ZigBeeClientListener(EIBClientListener):
         """
         knxSrc = printGroup(self.gaddrInt)
 
-        val = int(printValue(val, len(val)), 16)
+        val = printValue(val, len(val))
+
+        # avoid error state in case KNX device is reset via the KNX app
+        if not val:
+            return
+
+        val = int(val, 16)
 
         # transform data from python to zigbee protocol adequate form
         zbValue = zigbee_utils.getZigBeeValue(self.zbFormat, val)

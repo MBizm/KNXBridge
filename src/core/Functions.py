@@ -3,14 +3,22 @@ from datetime import datetime, timedelta, timezone
 
 import dateparser as dateparser
 
-from core.util.BasicUtil import log, is_number, convert_number, is_bool
+from threading import Timer
+from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool
 
 
-def executeFunction(deviceInstance, dpt, function, val):
+def executeFunction(deviceInstance, dpt, function, val,
+                    attrName, knxDest, knxFormat):
     """
     performs the selected functions val and returns the outcome. functions can be chained by givign a comma
     or semicolon separated list being processed from left to right
     :param deviceInstance:      KNXDDevice instance for knx value callbacks, type hint not specified due to import loop
+    :param dpt:                 data point type of value
+    :param function:            function to be applied on value
+    :param val:                 val from external source
+    :param attrName:            textual description of val context
+    :param knxDest:             destination for value
+    :param knxFormat:           string representation of target format
     :returns val of corresponding type after function execution
     """
     if not function:
@@ -21,17 +29,28 @@ def executeFunction(deviceInstance, dpt, function, val):
     for i in range(0, len(tok)):
         # None values might be set by functions, no further processing in these cases
         if len(tok[i]) > 0 and val is not None:
-            val = __executeFunctionImpl(deviceInstance, dpt, tok[i].strip(), val)
+            val = __executeFunctionImpl(deviceInstance, dpt, tok[i].strip(), val,
+                                        attrName, knxDest, knxFormat)
 
     return val
 
 
-def __executeFunctionImpl(deviceInstance, dpt, function, val):
+def _asynchWrite(deviceInstance, attrName, knxDest, knxFormat, val):
+    # called by asynchronous thread by function definition
+    deviceInstance.writeKNXAttribute(attrName, knxDest, knxFormat, val)
+
+
+def __executeFunctionImpl(deviceInstance, dpt, function, val,
+                          attrName, knxDest, knxFormat):
     errDetail = None
     if function[:3] == 'val':
         # replace current value by static value
         try:
-            val = float(function[4:-1])
+            val = function[4:-1]
+            if is_number(val):
+                val = float(val)
+            elif is_bool(val):
+                val = convert_bool(val)
         except ValueError:
             val = function[4:-1]
     elif function[:3] == 'inv':
@@ -158,7 +177,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val):
                 errDetail = 'wrong function definition'
         elif is_bool(val):
             try:
-                if bool(val) == bool(function[7:-1]):
+                if convert_bool(val) == convert_bool(function[7:-1]):
                     val = True
                 else:
                     val = None
@@ -183,7 +202,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val):
                 errDetail = 'wrong function definition'
         elif is_bool(val):
             try:
-                val = (bool(val) == bool(function[3:-1]))
+                val = (convert_bool(val) == convert_bool(function[3:-1]))
             except ValueError:
                 errDetail = 'wrong function definition'
         elif isinstance(val, str):
@@ -222,6 +241,27 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val):
             errDetail = None
         except ValueError:
             pass
+    elif function[:6] == 'asynch':
+        # asynchronous method call with not interfere with current execution
+        # but it will start another thread after defined duration with defined value as function
+        # syntax: asynch(<duration in sec> <function call>)
+        # important: use blank as separator not comma or semicolon!
+        # examples: asynch(60 val(true))
+        try:
+            tok = re.split("[ ]", function[7:-1])
+            duration = tok[0]
+            func = tok[1]
+            asynchVal = executeFunction(deviceInstance,
+                                      dpt, func, val,
+                                      attrName, knxDest, knxFormat)
+            Timer(int(duration), _asynchWrite, kwargs={"deviceInstance": deviceInstance,
+                                                       "attrName": attrName,
+                                                       "knxDest": knxDest,
+                                                       "knxFormat": knxFormat,
+                                                       "val": asynchVal
+                                                       }).start()
+        except Exception as e:
+            errDetail = 'Could not start asynchronous function - ' + str(e)
     if errDetail:
         log('error',
             'Could not apply function "{0}" to value {1} - {2}'.format(function,

@@ -97,7 +97,7 @@ def is_number(val):
 def is_bool(val):
     if isinstance(val, bool):
         return True
-    elif val == "True" or val == "False":
+    elif val.lower() == "true" or val.lower() == "false":
         return True
     return False
 
@@ -108,3 +108,11 @@ def convert_number(val):
         else:
             val = float(val)
     return val
+
+def convert_bool(val):
+    if val.lower() == "true":
+        return True
+    elif val.lower() == "false":
+        return False
+    else:
+        return bool(val)
