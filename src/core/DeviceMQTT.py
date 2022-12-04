@@ -44,15 +44,22 @@ class _MQTTClient(KNXDDevice):
                                         password=passwd)
         elif user:
             self.client.username_pw_set(username=user)
-        # establish connection
-        if host and port:
-            self.client.connect(host=host, port=port)
-        else:
-            self.client.connect(host=host)
-        # listener target/endpoint
+
         try:
+            # establish connection
+            if host and port:
+                self.client.connect(host=host, port=port)
+            else:
+                self.client.connect(host=host)
+
+            # listener target/endpoint
             self.client.subscribe(topic)
         except ValueError as ex:
+            log('error',
+                'Could not connect to MQTT server {0} for endpoint {1} [{2}]'.format(host,
+                                                                                     topic,
+                                                                                     ex))
+        except ConnectionRefusedError as ex:
             log('error',
                 'Could not connect to MQTT server {0} for endpoint {1} [{2}]'.format(host,
                                                                                      topic,

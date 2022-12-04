@@ -71,6 +71,10 @@ class ZigBeeGateway:
             log('error',
                 'Configuration error - attribute "{0}" in section "{1}" for deConzID "{2}" type "{3}" not defined: {4}'.format(
                     attr, section, id, type, ex))
+        except TypeError as ex :
+            log('error',
+                'Configuration error (2) - attribute "{0}" in section "{1}" for deConzID "{2}" type "{3}" not defined: {4}'.format(
+                    attr, section, id, type, ex))
 
         return ret
 
@@ -217,7 +221,7 @@ class ZigBeeClientListener(EIBClientListener):
 
         # sends update to zigbee device
         if self.zbClient.setAttribute(attr=self.zbAttr, val=zbValue):
-            log('info',
+            log('change',
                 'Value updated based on KNX value change {0}({1}): {2}(KNX value: {3}) for ZigBee client {4}'.format(
                     self.attrName, knxSrc,
                     zbValue, val,

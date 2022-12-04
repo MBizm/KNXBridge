@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from EIBClient import EIBClientFactory, EIBClientListener
 from common import printGroup, printValue
 from core.DeviceBase import KNXDDevice
@@ -73,7 +75,13 @@ class KNX2KNXClientListener(EIBClientListener):
         # if dc.checkFrame(val):
         #     val = dc.frameToData(val)
 
-        val = int(printValue(val, len(val)), 16)
+        try:
+            val = int(printValue(val, len(val)), 16)
+        except TypeError as e:
+            log('error',
+                'Value could not be updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(
+                    self.attrName, knxSrc,
+                    val, self.knxDest))
 
         # currently no conversion from one DPT type to another is foreseen
 

@@ -168,6 +168,9 @@ class KNXDDevice:
         except ValueError as ex:
             log('warning',
                 'Value comparison failed - {0}'.format(ex))
+        except BrokenPipeError as ex:
+            log('warning',
+                'Value comparison failed (broken pipe) - {0}'.format(ex))
         return ret
 
     #################################################

@@ -85,11 +85,13 @@ def getAttrSafe(attr, key):
 def is_number(val):
     if isinstance(val, (int, float)):
         return True
+    elif isinstance(val, list):
+        return False
     else:
         try:
             float(val)
             return True
-        except ValueError:
+        except ValueError or TypeError:
             return False
     return False
 
@@ -97,7 +99,8 @@ def is_number(val):
 def is_bool(val):
     if isinstance(val, bool):
         return True
-    elif val.lower() == "true" or val.lower() == "false":
+    elif isinstance(val, str) and (
+            val.lower() == "true" or val.lower() == "false"):
         return True
     return False
 
