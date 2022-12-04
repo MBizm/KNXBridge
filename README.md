@@ -1,5 +1,5 @@
 # KNXBridge
-Declarative EIB/KNX client for ease of bridging between KNX and other home automation specifications. Declaration is done via simple YAML file. The KNX Bridge client running as a daemon, assuring data transfer (r/w) and data transformation without the need for one line of code.
+Declarative EIB/KNX client for ease of bridging between KNX and other home automation specifications. Declaration is done via simple YAML file. The KNX Bridge client runs as a daemon, assuring data transfer (r/w) and data transformation without the need for one line of code.
 
 ## Prerequisites:
  - Running [KNXD daemon](https://github.com/smurfix/knxd) for communication with the KNX bus
