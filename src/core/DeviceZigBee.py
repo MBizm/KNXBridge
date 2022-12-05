@@ -39,8 +39,15 @@ class ZigBeeGateway:
         ZigBeeGateway.__deconzToken = deconzToken
         ZigBeeGateway.__state = None
 
+    def isActive(self):
+        # check whether ZigBeeGateway is initialized
+        if ZigBeeGateway.__deconzIP is None or ZigBeeGateway.__deconzPort is None or ZigBeeGateway.__deconzToken is None:
+            return False
+        return True
+
     def getState(self):
         """ performs get request to load latest status of all clients """
+
         try:
             response = requests.get("http://{0}:{1}/api/{2}/".format(ZigBeeGateway.__deconzIP,
                                                                      ZigBeeGateway.__deconzPort,

@@ -62,7 +62,7 @@ class KNXWriter:
         KNXGateway().setHostIP(configuration['knxdAppliance']['knxdIP'])
 
         # get ZigBee Gateway configuration
-        if configuration['deconzAppliance']:
+        if 'deconzAppliance' in configuration.keys():
             ZigBeeGateway().initialize(configuration['deconzAppliance']['deConzIP'],
                                        configuration['deconzAppliance']['deConzPort'],
                                        configuration['deconzAppliance']['deConzToken'])
@@ -105,7 +105,7 @@ class KNXWriter:
         # ModBus clients will be implicitely update as part of the getAttribute call
 
         # initialize ZigBee Gateway with latest client state
-        if ZigBeeGateway():
+        if ZigBeeGateway().isActive():
             ZigBeeGateway().getState()
 
         # iterate list of attributes to be updated
@@ -163,7 +163,7 @@ class KNXWriter:
                         log('error',
                             'Configuration error - modbusApplID({0}) not defined'.format(attr['zigbeeApplID']))
                 # handle ZigBee attributes
-                elif attr['type'] == 'zigbee2knx':
+                elif attr['type'] == 'zigbee2knx' and ZigBeeGateway().isActive():
                     # find corresponding ZigBee device
                     if attr['zigbeeApplID'] in self.zigbeeClients:
                         client = self.zigbeeClients[attr['zigbeeApplID']]
