@@ -47,6 +47,8 @@ class ZigBeeGateway:
 
     def getState(self):
         """ performs get request to load latest status of all clients """
+        if not(self.isActive()):
+            return
 
         try:
             response = requests.get("http://{0}:{1}/api/{2}/".format(ZigBeeGateway.__deconzIP,
@@ -59,6 +61,9 @@ class ZigBeeGateway:
     def getClientState(self, id, type, attr, section=None):
         """ get attribute for a defined client """
         ret = None
+
+        if not(self.isActive()):
+            return ret
 
         # default is state sectionwith only a few exceptions
         if section is None:
@@ -87,6 +92,8 @@ class ZigBeeGateway:
 
     def putClientState(self, id, type, attr, val):
         """ send attribute update and returns true if successful """
+        if not(self.isActive()):
+            return False
 
         response = requests.put("http://{0}:{1}/api/{2}/{3}/{4}/{5}".format(ZigBeeGateway.__deconzIP,
                                                                             ZigBeeGateway.__deconzPort,
