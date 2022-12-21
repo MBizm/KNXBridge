@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import dateparser as dateparser
 
 from threading import Timer
-from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool
+from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool, convert_val2xy
 
 
 def executeFunction(deviceInstance, dpt, function, val,
@@ -262,6 +262,13 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                                                        }).start()
         except Exception as e:
             errDetail = 'Could not start asynchronous function - ' + str(e)
+    elif function[:8] == 'rgb_2_xy':
+        # converts an rgb list into a xy coordinate list
+        try:
+            val = convert_val2xy(val)
+        except TypeError as e:
+            errDetail = 'Wrong value for color transformation'
+
     if errDetail:
         log('error',
             'Could not apply function "{0}" to value {1} - {2}'.format(function,

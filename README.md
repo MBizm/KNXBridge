@@ -125,7 +125,7 @@ Some components (can be also called YAML block items) are shared across applianc
     
 
 ### ZigBee physical device and attributes
-Given example is from a Samsung SmartThings gate control and a Devolo smoke alarm device
+Given example is from a Samsung SmartThings gate control, a Devolo smoke alarm device, and a Paulmann light panel
 
       - name:           "Garage Gate Closing State"
         type:           "zigbee2knx"
@@ -163,6 +163,28 @@ Given example is from a Samsung SmartThings gate control and a Devolo smoke alar
         knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
         knxFormat:      "1.002"
         updFreq:        "medium"
+	  - name:           "Light Paneel on/off"
+		type:           "knx2zigbee"
+		zigbeeApplID:   3a
+		zigbeeAttr:     "on"
+		zigbeeFormat:   "boolean"
+		knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+		knxFormat:      "1.002"
+	  - name:           "Light Paneel brightness"
+		type:           "knx2zigbee"
+		zigbeeApplID:   3a
+		zigbeeAttr:     "bri"
+		zigbeeFormat:   "int"
+		knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+		knxFormat:      "5.004"
+	  - name:           "Light Paneel COLOR"
+		type:           "knx2zigbee"
+		zigbeeApplID:   3a
+		zigbeeAttr:     "xy"
+		zigbeeFormat:   "list"
+		function:       "rgb_2_xy"
+		knxAddr:        '[<KNX_RED>,<KNX_GREEN>,<KNX_BLUE>]'
+		knxFormat:      "5.001"
 
 ### MQTT attribute
   

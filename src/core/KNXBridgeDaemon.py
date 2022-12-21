@@ -125,7 +125,7 @@ class KNXWriter:
                         client.installListener(attr['name'],
                                                attr['knxAddr'], attr['knxFormat'],
                                                attr['zigbeeAttr'], attr['zigbeeFormat'],
-                                               getAttrSafe(attr, 'zigbeeSection'))
+                                               getAttrSafe(attr, 'zigbeeSection'), getAttrSafe(attr, 'function'))
                 elif attr['type'] == 'knx2knx':
                     # knx2knx devices require dedicated handling only as part of the registration for KNX bus monitoring
                     # create client here without keeping handle to the instance

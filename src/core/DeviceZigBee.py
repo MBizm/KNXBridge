@@ -2,14 +2,17 @@ from typing import Dict
 
 import requests
 import yaml
+import json
 
 ### ZigBee constants
 # ZigBee client type
 from EIBClient import EIBClientListener, EIBClientFactory
 from common import printGroup, printValue
+from core import Functions
 from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
 from core.util.ZigBeeUtil import zigbee_utils
+from json.decoder import JSONDecodeError
 
 ZIGBEETYPEDEF: Dict[int, str] = {
     0: "lights",
@@ -90,10 +93,15 @@ class ZigBeeGateway:
 
         return ret
 
-    def putClientState(self, id, type, attr, val):
+    def putClientState(self, id, type, attr, val, function):
         """ send attribute update and returns true if successful """
         if not(self.isActive()):
             return False
+
+        # perform transformations if defined before sending
+        if function:
+            val = Functions.executeFunction(None, None, function, val,
+                                            attr, None, None)
 
         response = requests.put("http://{0}:{1}/api/{2}/{3}/{4}/{5}".format(ZigBeeGateway.__deconzIP,
                                                                             ZigBeeGateway.__deconzPort,
@@ -158,22 +166,47 @@ class ZigBeeClient(KNXDDevice):
                                               zbAttr,
                                               zbSection)
 
-    def setAttribute(self, attr, val):
+    def setAttribute(self, attr, val, function):
         """ sends request to update client status, will return true in case of success """
         return ZigBeeGateway().putClientState(self.deconzID,
                                               self.deconzType,
                                               attr,
-                                              val)
+                                              val,
+                                              function)
 
     def installListener(self, attrName: str,
                         knxSrc: str, knxFormat: str,
-                        zbAttr: str, zbFormat: str, zbSection: str):
+                        zbAttr: str, zbFormat: str, zbSection: str, function: str):
         # create new listener that will route incoming knx events and zigbee update requests
-        listener = ZigBeeClientListener(self, attrName,
-                                        knxSrc, knxFormat,
-                                        zbAttr, zbFormat, zbSection)
-        # register listener on central EIB/KNX bus monitor
-        EIBClientFactory().registerListener(listener)
+        if knxSrc.find("[") == -1:
+            listener = ZigBeeClientListener(self, attrName,
+                                            knxSrc, knxFormat,
+                                            zbAttr, zbFormat, zbSection, function)
+            # register listener on central EIB/KNX bus monitor
+            EIBClientFactory().registerListener(listener)
+        # create new group listener that will route multiple incoming knx events and zigbee update requests
+        else:
+            # parse group definition
+            try:
+                knxSrc = json.loads(knxSrc)
+                if not type(knxSrc) == list:
+                    raise ValueError()
+            except JSONDecodeError as e:
+                log('error',
+                    'Could not interpret value attribute: {0} knxSrc: {1}'.format(attrName,
+                                                                                    knxSrc))
+            except ValueError as e:
+                log('error',
+                    'Wrong group definition, group must be of type list - attribute: {0} knxSrc: {1}'.format(attrName,
+                                                                                                                knxSrc))
+            # create group listener
+            glistener = ZigBeeGroupInstance(self, attrName,
+                                            knxSrc, knxFormat,
+                                            zbAttr, zbFormat, zbSection, function)
+            # register listener on central EIB/KNX bus monitor
+            for listener in glistener.getListenerList():
+                EIBClientFactory().registerListener(listener)
+
 
     #########################################
     #           overridden KNX methods      #
@@ -203,7 +236,7 @@ class ZigBeeClientListener(EIBClientListener):
 
     def __init__(self, zbClient: ZigBeeClient, attrName: str,
                  knxSrc: str, knxFormat: str,
-                 zbAttr: str, zbFormat: str, zbSection: str):
+                 zbAttr: str, zbFormat: str, zbSection: str, function: str):
         # call super class
         super().__init__(knxSrc)
         # store instance attributes
@@ -213,6 +246,7 @@ class ZigBeeClientListener(EIBClientListener):
         self.zbSection = zbSection
         self.zbAttr = zbAttr
         self.zbFormat = zbFormat
+        self.function = function
         # self.knxAggr = knxAggr
         # self.zigTrans = zigTrans
 
@@ -220,21 +254,29 @@ class ZigBeeClientListener(EIBClientListener):
         """
         takes value from KNX and sends it to ZigBee device
         """
+        self.fireUpdate(val)
+
+    def fireUpdate(self, val):
+        """
+        actual implementation to send update to ZigBee device
+        """
         knxSrc = printGroup(self.gaddrInt)
 
-        val = printValue(val, len(val))
+        if self.zbFormat != zigbee_utils.ZBFORMAT_LIST:
+            # convert buffer to hex string representation
+            val = printValue(val, len(val))
 
-        # avoid error state in case KNX device is reset via the KNX app
-        if not val:
-            return
+            # avoid error state in case KNX device is reset via the KNX app
+            if not val:
+                return
 
-        val = int(val, 16)
+            val = int(val, 16)
 
         # transform data from python to zigbee protocol adequate form
         zbValue = zigbee_utils.getZigBeeValue(self.zbFormat, val)
 
         # sends update to zigbee device
-        if self.zbClient.setAttribute(attr=self.zbAttr, val=zbValue):
+        if self.zbClient.setAttribute(attr=self.zbAttr, val=zbValue, function=self.function):
             log('change',
                 'Value updated based on KNX value change {0}({1}): {2}(KNX value: {3}) for ZigBee client {4}'.format(
                     self.attrName, knxSrc,
@@ -246,3 +288,79 @@ class ZigBeeClientListener(EIBClientListener):
                     self.attrName, knxSrc,
                     zbValue, val,
                     self.zbClient.uniqueID))
+
+class ZigBeeGroupInstance():
+    """
+    will route multiple knx event trigger received from EIB/KNX client to zigbee device
+    """
+
+    def __init__(self, zbClient: ZigBeeClient, attrName: str,
+                 knxSrcs: str, knxFormat: str,
+                 zbAttr: str, zbFormat: str, zbSection: str, function: str):
+        super().__init__()
+        self.__listenerList = []
+        # event list to track all events before sending zigbee command
+        self.__events = None
+
+        srcs = []
+        for src in knxSrcs:
+            # convert keys to EIB representation if required
+            srcs.append(src.replace("/", "."))
+            listener = ZigBeeGroupClientListener(self, zbClient, attrName,
+                                                    src, knxFormat,
+                                                    zbAttr, zbFormat, zbSection, function)
+            # store listener reference
+            self.__listenerList.append(listener)
+
+        self.__events = dict.fromkeys(srcs, None)
+
+    def getListenerList(self):
+        return self.__listenerList
+
+    def updateOccurred(self, listener: ZigBeeClientListener, knxSrc: str, val):
+        # store value in event list
+        self.__events[knxSrc] = val
+
+        is_ready = True
+
+        for src in self.__events.keys():
+            if self.__events[src] is None:
+                is_ready = False
+                break
+
+        if is_ready:
+            # send update
+            listener.fireUpdate(list(self.__events.values()))
+
+             # reset event values
+            for src in self.__events.keys():
+                self.__events[src] = None
+
+
+class ZigBeeGroupClientListener(ZigBeeClientListener):
+    """
+    overrides base class to accumulate events of the group before sending zigbee update
+    """
+
+    def __init__(self, zbGroup: ZigBeeGroupInstance, zbClient: ZigBeeClient, attrName: str,
+                 knxSrc: str, knxFormat: str,
+                 zbAttr: str, zbFormat: str, zbSection: str, function: str):
+        super().__init__(zbClient, attrName,
+                            knxSrc, knxFormat,
+                            zbAttr, zbFormat, zbSection, function)
+        self.__zbGroup = zbGroup
+
+    def updateOccurred(self, srcAddr, val):
+        knxSrc = printGroup(self.gaddrInt)
+
+        # convert buffer to hex string representation
+        val = printValue(val, len(val))
+
+        # avoid error state in case KNX device is reset via the KNX app
+        if not val:
+            return
+
+        val = int(val, 16)
+
+        # delegate decision to send event to group instance
+        self.__zbGroup.updateOccurred(self, knxSrc, val)

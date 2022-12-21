@@ -2,15 +2,19 @@
 class zigbee_utils:
     """ Utility for value conversion for ZigBee protocol """
 
+    ZBFORMAT_BOOL   = "boolean"
+    ZBFORMAT_INT    = "int"
+    ZBFORMAT_LIST   = "list"
+
     def __init__(self):
         pass
 
     @staticmethod
     def getZigBeeValue(zigFormat, val):
         ret = None
-        if zigFormat == "boolean":
+        if zigFormat == zigbee_utils.ZBFORMAT_BOOL:
             ret = bool(val)
-        if zigFormat == "int":
-            # nothing to do here - val is already int representation of hex
+        if zigFormat == zigbee_utils.ZBFORMAT_INT or zigFormat == zigbee_utils.ZBFORMAT_LIST:
+            # nothing to do here
             ret = val
         return ret

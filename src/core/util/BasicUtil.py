@@ -119,3 +119,16 @@ def convert_bool(val):
         return False
     else:
         return bool(val)
+    
+def convert_val2xy(val):
+    # covnerts rgb color representation to xy coordinates
+    # https://stackoverflow.com/questions/22564187/val-to-philips-hue-hsb
+    X = float(val[0] * 0.649926 + val[1] * 0.103455 + val[2] * 0.197109)
+    Y = float(val[0] * 0.234327 + val[1] * 0.743075 + val[2] * 0.022598)
+    Z = float(val[0] * 0.0000000 + val[1] * 0.053077 + val[2] * 1.035763)
+
+    if (X + Y + Z) == 0:
+        return [float(0), float(0)]
+
+    return [float(X / (X + Y + Z)),
+            float(Y / (X + Y + Z))]
