@@ -262,7 +262,8 @@ class ZigBeeClientListener(EIBClientListener):
         """
         knxSrc = printGroup(self.gaddrInt)
 
-        if self.zbFormat != zigbee_utils.ZBFORMAT_LIST:
+        if self.zbFormat != zigbee_utils.ZBFORMAT_LIST and \
+                self.zbFormat != zigbee_utils.ZBFORMAT_MIREDCOL:
             # convert buffer to hex string representation
             val = printValue(val, len(val))
 

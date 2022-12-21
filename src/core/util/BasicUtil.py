@@ -132,3 +132,19 @@ def convert_val2xy(val):
 
     return [float(X / (X + Y + Z)),
             float(Y / (X + Y + Z))]
+
+def convert_oct2int(val):
+    # converts a tuplet of 4 values (where last 2 represent the octet decimal and base into into
+    # https://stackoverflow.com/questions/35450560/how-to-use-python-to-convert-an-octal-to-a-decimal
+    a = int(val[3]) # decimal
+    d = int(val[2]) # base
+    b = ""
+    while a != 0:
+        x = '0123456789ABCDEF'
+        c = a % d
+        if c > 15:
+            c = c % 15
+        c1 = x[c]
+        b = str(c1) + b
+        a = int(a // d)
+    return int(b, 16)

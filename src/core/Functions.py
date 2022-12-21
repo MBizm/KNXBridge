@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import dateparser as dateparser
 
 from threading import Timer
-from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool, convert_val2xy
+from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool, convert_val2xy, convert_oct2int
 
 
 def executeFunction(deviceInstance, dpt, function, val,
@@ -65,7 +65,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         if is_number(val):
             try:
                 val = convert_number(val)
-                val = max(val, function[4:-1])
+                val = max(val, float(function[4:-1]))
             except ValueError:
                 errDetail = 'wrong function definition'
         else:
@@ -75,7 +75,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         if is_number(val):
             try:
                 val = convert_number(val)
-                val = min(val, function[4:-1])
+                val = min(val, float(function[4:-1]))
             except ValueError:
                 errDetail = 'wrong function definition'
         else:
@@ -85,7 +85,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         if is_number(val):
             try:
                 val = convert_number(val)
-                val = round(val, function[4:-1])
+                val = round(val, float(function[4:-1]))
             except ValueError:
                 errDetail = 'wrong function definition'
         else:
@@ -268,7 +268,9 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
             val = convert_val2xy(val)
         except TypeError as e:
             errDetail = 'Wrong value for color transformation'
-
+    elif function[:9] == 'oct_2_int':
+        oldVal = val
+        val = convert_oct2int(val)
     if errDetail:
         log('error',
             'Could not apply function "{0}" to value {1} - {2}'.format(function,
