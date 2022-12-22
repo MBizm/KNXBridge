@@ -2,6 +2,7 @@ import os
 
 from EIBClient import EIBClientFactory
 from core import Functions, Flags
+from core.ApplianceBase import ApplianceBase
 from core.util.BasicUtil import log, is_number, convert_number, is_bool
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
 from pknyx.core.dptXlator.dptXlatorBase import DPTXlatorValueError
@@ -32,6 +33,21 @@ class KNXDDevice:
     derive all endpoint device class (zigbee, modbus, ...) from this class
     use KNX read/write methods for interaction with the KNX device
     """
+
+    def writeAttribute(self, type: str, attrName: str,
+                          knxDest: str, knxFormat: str,
+                          val, function=None, flags=None, appliance: ApplianceBase = None) -> bool:
+        """
+        segregator function to allow derived classes to have their own KNX independent implementation
+        """
+        ret = False
+
+        if type == 'modbus2knx' or type == 'zigbee2knx':
+            ret = self.writeKNXAttribute(attrName, knxDest, knxFormat, val, function, flags)
+        else:
+            raise NotImplementedError
+
+        return ret
 
     #########################################
     #   KNX specific methods, read/write    #
@@ -181,4 +197,5 @@ class KNXDDevice:
         """ retrieves the value from specific client and converts it into python datatype"""
         raise NotImplementedError
 
-    # TODO define format for setAttribute abstract methods
+    def setAttribute(self, attr, val, function):
+        raise NotImplementedError

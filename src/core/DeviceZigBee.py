@@ -9,6 +9,7 @@ import json
 from EIBClient import EIBClientListener, EIBClientFactory
 from common import printGroup, printValue
 from core import Functions
+from core.ApplianceBase import ApplianceBase
 from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
 from core.util.ZigBeeUtil import zigbee_utils
@@ -21,8 +22,7 @@ ZIGBEETYPEDEF: Dict[int, str] = {
     3: "groups"
 }
 
-
-class ZigBeeGateway:
+class ZigBeeGateway(ApplianceBase):
     """ central singleton gateway handling all ZigBee client requests (r/w) """
     __instance = None
     __deconzIP = None
@@ -34,6 +34,9 @@ class ZigBeeGateway:
         if ZigBeeGateway.__instance is None:
             ZigBeeGateway.__instance = object.__new__(cls)
         return ZigBeeGateway.__instance
+
+    def getName(self) -> str:
+        return "ZigBee Appliance"
 
     @staticmethod
     def initialize(deconzIP, deconzPort, deconzToken):

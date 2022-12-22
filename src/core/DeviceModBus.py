@@ -2,16 +2,34 @@ from datetime import datetime
 
 from pymodbus.client.sync import ModbusTcpClient
 
+from core.ApplianceBase import ApplianceBase
 from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
 from core.util.ModBusUtil import modbus_utils
 
 
-class ModBusClient(KNXDDevice):
+class ModBusClient(KNXDDevice, ApplianceBase):
     def __init__(self, host, port):
         super(ModBusClient, self).__init__()
 
         self.__mbcImpl = ModbusTcpClient(host, port)
+
+    def getName(self) -> str:
+        return "ModBus Appliance"
+
+    # segregator for KNX-independent messaging to MQTT
+    def writeAttribute(self, type: str, attrName: str,
+                       dest: str, format: str,
+                       val, function=None, flags=None, appliance : ApplianceBase = None) -> bool:
+        ret = False
+
+        if type == 'modbus2mqtt':
+            ret = appliance.setAttribute(dest, val, function)
+        else:
+            ret = super(ModBusClient, self).writeAttribute(type, attrName,
+                                                           dest, format,
+                                                           val, function, flags)
+        return ret
 
     # specific attribute requests based on configuration
     def getAttribute(self, attrName, mbFormat, mbAddr):

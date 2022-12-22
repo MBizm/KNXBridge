@@ -1,10 +1,11 @@
 import paho.mqtt.client as mqtt
 
+from core.ApplianceBase import ApplianceBase
 from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log
 
 
-class MQTTAppliance():
+class MQTTAppliance(ApplianceBase):
     def __init__(self, host,
                  port=None, user=None, passwd=None):
         self.host = host
@@ -12,32 +13,33 @@ class MQTTAppliance():
         self.user = user
         self.pwd = passwd
 
+    def getName(self) -> str:
+        return "MQTT Appliance"
+
+    def setAttribute(self, attr, val, function):
+        """
+        custom implementation to suit *2mqtt requests
+        will update the define attribute on the MQTT broker
+        """
+        # setup temporary client for one-time request
+        client = _MQTTBaseClient(self.host, self.port, self.user, self.pwd, attr)
+        client.setAttribute(attr, val, function)
+        client.closeConnection()
+
     def setupClient(self, name, topic, knxAddr, knxFormat, function=None, flags=None):
-        client = _MQTTClient(self.host, self.port, self.user, self.pwd,
-                             name, topic,
-                             knxAddr, knxFormat, function, flags)
+        client = _MQTT2KNXClient(self.host, self.port, self.user, self.pwd,
+                                 name, topic,
+                                 knxAddr, knxFormat, function, flags)
         client.start()
 
 
-class _MQTTClient(KNXDDevice):
-    """
-    client class which initiates a listener threads which reports any chage from the broker
-    via the callback function
-    """
-    def __init__(self, host, port, user, passwd,
-                 name, topic,
-                 knxDest, knxFormat, function, flags):
-        super(_MQTTClient, self).__init__()
-
-        self.attrName = name
-        self.knxDest = knxDest
-        self.knxFormat = knxFormat
-        self.function = function
-        self.flags = flags
+class _MQTTBaseClient(KNXDDevice):
+    def __init__(self, host, port, user, passwd, name):
+        super(_MQTTBaseClient, self).__init__()
 
         # set up MQTT client connection to broker
-        self.client = mqtt.Client("KNXBridgeDaemon-"+name)
-        self.client.on_message = self.updateReceived
+        self.client = mqtt.Client("KNXBridgeDaemon-" + name)
+
         # authenticate
         if user and passwd:
             self.client.username_pw_set(username=user,
@@ -51,15 +53,48 @@ class _MQTTClient(KNXDDevice):
                 self.client.connect(host=host, port=port)
             else:
                 self.client.connect(host=host)
+        except ConnectionRefusedError as ex:
+            log('error',
+                'Could not connect to MQTT server {0} port {1} [{2}]'.format(host,
+                                                                             port,
+                                                                             ex))
 
+        def setAttribute(self, attr, val, function):
+            raise NotImplementedError
+
+    def setAttribute(self, attr, val, function):
+        """
+        updates value on broker
+        """
+        self.client.publish(attr, val)
+
+    def closeConnection(self):
+        self.client.disconnect()
+
+
+class _MQTT2KNXClient(_MQTTBaseClient):
+    """
+    client class which initiates a listener threads which reports any chage from the broker
+    via the callback function
+    """
+
+    def __init__(self, host, port, user, passwd,
+                 name, topic,
+                 knxDest, knxFormat, function, flags):
+        super(_MQTT2KNXClient, self).__init__(host, port, user, passwd, name)
+
+        self.attrName = name
+        self.knxDest = knxDest
+        self.knxFormat = knxFormat
+        self.function = function
+        self.flags = flags
+
+        try:
             # listener target/endpoint
+            self.client.on_message = self.updateReceived
+
             self.client.subscribe(topic)
         except ValueError as ex:
-            log('error',
-                'Could not connect to MQTT server {0} for endpoint {1} [{2}]'.format(host,
-                                                                                     topic,
-                                                                                     ex))
-        except ConnectionRefusedError as ex:
             log('error',
                 'Could not connect to MQTT server {0} for endpoint {1} [{2}]'.format(host,
                                                                                      topic,

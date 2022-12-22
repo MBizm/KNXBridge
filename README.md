@@ -1,6 +1,12 @@
 # KNXBridge
 Declarative EIB/KNX client for ease of bridging between KNX and other home automation specifications. Declaration is done via simple YAML file. The KNX Bridge client runs as a daemon, assuring data transfer (r/w) and data transformation without the need for one line of code.
 
+## Whom is KNXBridge for:
+KNXBridge is for all home automation enthusiasts which are:
+ - have their own custom KNX home automation and seek an easy setup and easy maintenance solution in comparison to openHab, ioBroker, Home-Assistant, and alike without the need for a graphical representation
+ - have a commercial KNX home automation like Hager, MDT, and alike and want to integrate custom components via the KNX bus to circumvent vendor-lockin
+KNXBridge is centered around KNX but also provides general bridging functions, e.g routing messages from ModBus to MQTT. General KNX as well as associated appliance understanding to define endpoints and datatypes is required.
+   
 ## Prerequisites:
  - Running [KNXD daemon](https://github.com/smurfix/knxd) for communication with the KNX bus
  - The [EIB/KNX Client](https://github.com/MBizm/KNXPClient) as the Python-interface with KNXD
@@ -122,6 +128,14 @@ Some components (can be also called YAML block items) are shared across applianc
         knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
         knxFormat:      "14.056"
         updFreq:        "very high"
+	  - name:           "Current AC Power - MQTT"
+    	type:           "modbus2mqtt"
+		modbusApplID:   0
+		modbusAddrDec:  100
+		modbusFormat:   "float"
+		mqttApplID:     100
+		mqttTopic:      "/PV/CurrentACSolar"
+		updFreq:        "very high"
     
 
 ### ZigBee physical device and attributes

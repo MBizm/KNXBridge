@@ -148,9 +148,13 @@ class KNXWriter:
 
                 client = None
                 newVal = None
+                appliance = None
+
+                destAddr = getAttrSafe(attr, 'knxAddr')
+                destFormat = getAttrSafe(attr, 'knxFormat')
 
                 # check update type - currently only modbus read, knx write is supported
-                if attr['type'] == 'modbus2knx':
+                if attr['type'] == 'modbus2knx' or attr['type'] == 'modbus2mqtt':
                     # find corresponding ModBus device
                     if attr['modbusApplID'] in self.modbusClients:
                         client = self.modbusClients[attr['modbusApplID']]
@@ -159,6 +163,12 @@ class KNXWriter:
                         newVal = client.getAttribute(attr['name'],
                                                      attr['modbusFormat'],
                                                      attr['modbusAddrDec'])
+
+                        # define appliance and destination for sending MQTT updates
+                        if attr['type'] == 'modbus2mqtt':
+                            appliance = self.mqttAppliances[attr['mqttApplID']]
+                            destAddr = attr['mqttTopic']
+                            destFormat = None
                     else:
                         log('error',
                             'Configuration error - modbusApplID({0}) not defined'.format(attr['zigbeeApplID']))
@@ -179,12 +189,14 @@ class KNXWriter:
 
                 # write value to bus
                 if client is not None and newVal is not None:
-                    client.writeKNXAttribute(attr['name'],
-                                             attr['knxAddr'],
-                                             attr['knxFormat'],
+                    client.writeAttribute(attr['type'],
+                                             attr['name'],
+                                             destAddr,
+                                             destFormat,
                                              newVal,
                                              getAttrSafe(attr, 'function'),
-                                             getAttrSafe(attr, 'flags'))
+                                             getAttrSafe(attr, 'flags'),
+                                             appliance)
 
         # run periodically update of values - each update frequency initiating its own thread
         # initial run by main will initiate all threads at once
