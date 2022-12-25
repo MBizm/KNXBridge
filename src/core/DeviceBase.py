@@ -96,6 +96,9 @@ class KNXDDevice:
         # get DPT implementation
         dc = DPTXlatorFactoryFacade().create(knxFormat)
 
+        if dc is None:
+            return False
+
         # perform transformations if defined before sending to bus
         if function:
             val = self.performFunction(dc.dpt, function, val,

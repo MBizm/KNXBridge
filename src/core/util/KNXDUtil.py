@@ -1,5 +1,5 @@
 from core.util.BasicUtil import log
-from pknyx.core.dptXlator.dptXlatorBase import DPTXlatorBase
+from pknyx.core.dptXlator.dptXlatorBase import DPTXlatorBase, DPTXlatorValueError
 from pknyx.core.dptXlator.dptXlatorBoolean import DPTXlatorBoolean
 from pknyx.core.dptXlator.dptXlatorFactory import DPTXlatorFactory
 
@@ -14,8 +14,15 @@ class DPTXlatorFactoryObjectFacade:
 
     def create(self, dptId):
         """ wrap DPT object for customization """
-        dptHandler = self.__dptfImpl.create(dptId)
-        return DPTXlatorBaseFacade(dptHandler)
+        ret = None
+        try:
+            dptHandler = self.__dptfImpl.create(dptId)
+            ret = DPTXlatorBaseFacade(dptHandler)
+        except DPTXlatorValueError as e:
+            log('error',
+                'KNXDUtil - DPTXlatorError: {0}'.format(e))
+
+        return ret
 
 
 def DPTXlatorFactoryFacade():
