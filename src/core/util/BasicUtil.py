@@ -134,6 +134,12 @@ def convert_val2xy(val):
             float(Y / (X + Y + Z))]
 
 def convert_oct2int(val):
+    # catch erroneous state - to be investigated
+    if len(val) < 4:
+        log("error",
+            "Wrong value for oct2int conversion (must be 4 tuples): " + str(val))
+        return int(str(0), 16)
+
     # converts a tuplet of 4 values (where last 2 represent the octet decimal and base into into
     # https://stackoverflow.com/questions/35450560/how-to-use-python-to-convert-an-octal-to-a-decimal
     a = int(val[3]) # decimal

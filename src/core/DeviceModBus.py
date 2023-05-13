@@ -53,7 +53,7 @@ class ModBusClient(KNXDDevice, ApplianceBase):
                             val = val + modbus_utils.ReadFloat(self.__mbcImpl,
                                                                ids)
             except Exception as ex:
-                log('error',
+                log('warning',
                     'Error reading ModBus value - {0}: {1}'.format(attrName,
                                                                    ex))
 
