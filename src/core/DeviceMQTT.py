@@ -26,9 +26,9 @@ class MQTTAppliance(ApplianceBase):
         client.setAttribute(attr, val, function)
         client.closeConnection()
 
-    def setupClient(self, name, topic, knxAddr, knxFormat, function=None, flags=None):
+    def setupClient(self, name, topic, knxAddr, knxFormat, mqttFormat=None, function=None, flags=None):
         client = _MQTT2KNXClient(self.host, self.port, self.user, self.pwd,
-                                 name, topic,
+                                 name, topic, mqttFormat,
                                  knxAddr, knxFormat, function, flags)
         client.start()
 
@@ -79,11 +79,12 @@ class _MQTT2KNXClient(_MQTTBaseClient):
     """
 
     def __init__(self, host, port, user, passwd,
-                 name, topic,
+                 name, topic, mqttFormat,
                  knxDest, knxFormat, function, flags):
         super(_MQTT2KNXClient, self).__init__(host, port, user, passwd, name)
 
         self.attrName = name
+        self.mqttFormat= mqttFormat
         self.knxDest = knxDest
         self.knxFormat = knxFormat
         self.function = function
@@ -104,5 +105,19 @@ class _MQTT2KNXClient(_MQTTBaseClient):
         self.client.loop_start()
 
     def updateReceived(self, client, userdata, message):
+        val = message.payload.decode("utf-8")
+
+        if self.mqttFormat == 'int':
+            val = int(val)
+        elif self.mqttFormat == 'float':
+            val = float(val)
+        elif self.mqttFormat == 'boolean':
+            if val == 'True':
+                val = True
+            elif val == 'False':
+                val = False
+        elif self.mqttFormat == 'str':
+            val = str(val)
+
         super().writeKNXAttribute(self.attrName, self.knxDest, self.knxFormat,
-                                  message.payload.decode("utf-8"), function=self.function, flags=self.flags)
+                                  val, function=self.function, flags=self.flags)

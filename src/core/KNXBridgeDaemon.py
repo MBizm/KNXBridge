@@ -140,6 +140,7 @@ class KNXWriter:
                         appliance = self.mqttAppliances[attr['mqttApplID']]
                         appliance.setupClient(attr['name'], attr['mqttTopic'],
                                               attr['knxAddr'], attr['knxFormat'],
+                                              getAttrSafe(attr, 'mqttFormat'),
                                               getAttrSafe(attr, 'function'),
                                               getAttrSafe(attr, 'flags'))
 
