@@ -1,9 +1,7 @@
-pymodbus==^2.4.0
-PyYAML>=5.4.1
+pymodbus~=2.4.0
 requests~=2.25.1
-
-PyYAML~=5.3.1
+PyYAML~=5.4.1
 pymodbus~=2.4.0
 dateparser~=1.0.0
 paho-mqtt~=1.5.1
-httpx~=0.17.1
+httpx>=0.17.1
