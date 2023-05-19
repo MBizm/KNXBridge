@@ -79,6 +79,7 @@ def getAttrSafe(attr, key):
 
     return ret
 
+
 #################################
 #   Numeric helper methods      #
 #################################
@@ -104,6 +105,7 @@ def is_bool(val):
         return True
     return False
 
+
 def convert_number(val):
     if isinstance(val, str):
         if val.isdigit():
@@ -112,6 +114,7 @@ def convert_number(val):
             val = float(val)
     return val
 
+
 def convert_bool(val):
     if val.lower() == "true":
         return True
@@ -119,7 +122,8 @@ def convert_bool(val):
         return False
     else:
         return bool(val)
-    
+
+
 def convert_val2xy(val):
     # covnerts rgb color representation to xy coordinates
     # https://stackoverflow.com/questions/22564187/val-to-philips-hue-hsb
@@ -133,6 +137,7 @@ def convert_val2xy(val):
     return [float(X / (X + Y + Z)),
             float(Y / (X + Y + Z))]
 
+
 def convert_oct2int(val):
     # catch erroneous state - to be investigated
     if len(val) < 4:
@@ -142,8 +147,8 @@ def convert_oct2int(val):
 
     # converts a tuplet of 4 values (where last 2 represent the octet decimal and base into into
     # https://stackoverflow.com/questions/35450560/how-to-use-python-to-convert-an-octal-to-a-decimal
-    a = int(val[3]) # decimal
-    d = int(val[2]) # base
+    a = int(val[3])  # decimal
+    d = int(val[2])  # base
     b = ""
     while a != 0:
         x = '0123456789ABCDEF'
@@ -154,3 +159,15 @@ def convert_oct2int(val):
         b = str(c1) + b
         a = int(a // d)
     return int(b, 16)
+
+
+#################################
+#           Helper class        #
+#################################
+"""
+This class represents a functional None value that is though intended not to raise an error log message
+but should be treated as if a return value was not of relevance.
+In short: legitim None Value representation
+"""
+class NoneValueClass:
+    pass

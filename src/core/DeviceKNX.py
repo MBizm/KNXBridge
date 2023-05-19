@@ -3,7 +3,7 @@ from datetime import datetime
 from EIBClient import EIBClientFactory, EIBClientListener
 from common import printGroup, printValue
 from core.DeviceBase import KNXDDevice
-from core.util.BasicUtil import log
+from core.util.BasicUtil import log, NoneValueClass
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
 
 
@@ -86,7 +86,7 @@ class KNX2KNXClientListener(EIBClientListener):
         # currently no conversion from one DPT type to another is foreseen
 
         # sends update to the other knx device
-        if val is not None and \
+        if val is not None and type(val) is not NoneValueClass and \
                 self.knxClient.setAttribute(attrName=self.attrName, val=val,
                                             dest=self.knxDest, format=self.knxFormat,
                                             function=self.function):
@@ -94,7 +94,9 @@ class KNX2KNXClientListener(EIBClientListener):
                 'Value updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(self.attrName, knxSrc,
                                                                                                   val, self.knxDest))
         else:
-            log('error',
-                'Value could not be updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(
-                    self.attrName, knxSrc,
-                    val, self.knxDest))
+            # check if function resulted in explicit exclusion of a return value
+            if type(val) is not NoneValueClass:
+                log('error',
+                    'Value could not be updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(
+                        self.attrName, knxSrc,
+                        val, self.knxDest))

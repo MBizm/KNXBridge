@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 import dateparser as dateparser
 
 from threading import Timer
-from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool, convert_val2xy, convert_oct2int
+from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool, convert_val2xy, convert_oct2int, NoneValueClass
 
 
 def executeFunction(deviceInstance, dpt, function, val,
@@ -58,6 +58,9 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         if is_bool(val):
             # generic 0/1 representation required for dpxlator DPT conversion
             val = not val
+        # check for legitim None value
+        elif type(val) is NoneValueClass:
+            pass # do nothing
         else:
             errDetail = 'wrong value type'
     elif function[:3] == 'max':
@@ -172,7 +175,8 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 if float(val) == float(function[7:-1]):
                     val = True
                 else:
-                    val = None
+                    # indicate legitim None value
+                    val = NoneValueClass()
             except ValueError:
                 errDetail = 'wrong function definition'
         elif is_bool(val):
@@ -180,7 +184,8 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 if convert_bool(val) == convert_bool(function[7:-1]):
                     val = True
                 else:
-                    val = None
+                    # indicate legitim None value
+                    val = NoneValueClass()
             except ValueError:
                 errDetail = 'wrong function definition'
         elif isinstance(val, str):
@@ -188,7 +193,8 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 if str(val) == str(function[7:-1]):
                     val = True
                 else:
-                    val = None
+                    # indicate legitim None value
+                    val = NoneValueClass()
             except ValueError:
                 errDetail = 'wrong function definition'
         else:

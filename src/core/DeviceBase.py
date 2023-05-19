@@ -3,7 +3,7 @@ import os
 from EIBClient import EIBClientFactory
 from core import Functions, Flags
 from core.ApplianceBase import ApplianceBase
-from core.util.BasicUtil import log, is_number, convert_number, is_bool
+from core.util.BasicUtil import log, is_number, convert_number, is_bool, NoneValueClass
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
 from pknyx.core.dptXlator.dptXlatorBase import DPTXlatorValueError
 
@@ -108,6 +108,9 @@ class KNXDDevice:
         # for valid reason with no further write action to be performed
         if val is None:
             return False
+        # indicate legitim None value
+        if type(val) is NoneValueClass:
+            return True
 
         # convert to DPT representation
         try:
