@@ -207,6 +207,7 @@ Given example is from a Samsung SmartThings gate control, a Devolo smoke alarm d
         type:           "mqtt2knx"
         mqttApplID:     100
         mqttTopic:      "/waterflow"
+        mqttFormat:     "float"
         knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
         knxFormat:      "14.077"   # liter/sec
 
