@@ -36,7 +36,7 @@ def log(level, msg):
     # TODO switch to logging.handlers.RotatingFileHandler for size restriction
     if __verbosity & VERBOSITYDEF[level] == VERBOSITYDEF[level]:
         with open(logPath, 'a+') as stream:
-            stream.write("{0} ###\t{1}\t###: {2}\n".format(datetime.now().strftime("%d.%b. %I:%M:%S"),
+            stream.write("{0} ###\t{1}\t###: {2}\n".format(datetime.now().strftime("%d.%b. %H:%M:%S"),
                                                            level.upper(),
                                                            msg))
 

@@ -1,3 +1,4 @@
+import struct
 from datetime import datetime
 
 from EIBClient import EIBClientFactory, EIBClientListener
@@ -5,6 +6,7 @@ from common import printGroup, printValue
 from core.DeviceBase import KNXDDevice
 from core.util.BasicUtil import log, NoneValueClass
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
+from pknyx.core.dptXlator.dptXlatorFactory import DPTXlatorFactory
 
 
 class KNX2KNXClient(KNXDDevice):
@@ -70,13 +72,16 @@ class KNX2KNXClientListener(EIBClientListener):
         knxSrc = printGroup(self.gaddrInt)
 
         # get DPT implementation
-        # dc = DPTXlatorFactoryFacade().create(self.knxFormat)
-
-        # if dc.checkFrame(val):
-        #     val = dc.frameToData(val)
+        dc = DPTXlatorFactoryFacade().create(self.knxFormat)
 
         try:
-            val = int(printValue(val, len(val)), 16)
+            if val is not None:
+                val = printValue(val, len(val))
+                if val is not None:
+                    # transform to hex representation
+                    val = "0x" + val.replace(" ", "")
+                    # convert by respective Xlator
+                    val = dc.dataToValue(int(val,16))
         except TypeError as e:
             log('error',
                 'Value could not be updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(

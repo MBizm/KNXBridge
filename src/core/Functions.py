@@ -137,9 +137,9 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         if is_number(val):
             gv = function[4:-1]
             # check for live KNX value
-            if gv[:1] == '/':
-                deviceInstance.readKNXAttribute("functions live value",
-                                                gv, dpt)
+            if '/' in gv:
+                gv = deviceInstance.readKNXAttribute("functions live value",
+                                                gv, knxFormat)
             try:
                 val = convert_number(val)
                 val = val - float(gv)

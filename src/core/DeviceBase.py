@@ -1,6 +1,7 @@
 import os
 
 from EIBClient import EIBClientFactory
+from common import printValue
 from core import Functions, Flags
 from core.ApplianceBase import ApplianceBase
 from core.util.BasicUtil import log, is_number, convert_number, is_bool, NoneValueClass
@@ -59,28 +60,29 @@ class KNXDDevice:
         """
         val = None
 
-        dpt = EIBClientFactory().getClient().GroupCache_Read(knxSrc)
+        raw = EIBClientFactory().getClient().GroupCache_Read(knxSrc)
 
-        # convert value from string representation into hex
-        dpt = int(dpt, 16)
+#        # convert value from string representation into hex
+#        dpt = int(dpt, 16)
 
         # get DPT implementation for python type conversion
         dc = DPTXlatorFactoryFacade().create(knxFormat)
 
         try:
-            if dc.checkData(dpt):
-                val = dc.dataToValue(dpt)
+            # transform to hex representation
+            raw = "0x" + raw.replace(" ", "")
+            # convert by respective Xlator
+            val = dc.dataToValue(int(raw, 16))
 
-                log('info',
-                    f'Value retrieved (group cache) "{attrName}"[{knxSrc}] value={val}({dpt})')
+            log('info', f'Value retrieved (group cache) "{attrName}"[{knxSrc}] value={val}({raw})')
         except DPTXlatorValueError as ex:
             # log failure
             log('error',
-                f'Value could not be read "{attrName}"[{knxSrc}] value={dpt} - Check type definition for DPT type "{knxFormat}" and value "{dpt}" - {ex}')
+                f'Value could not be read "{attrName}"[{knxSrc}] value={raw} - Check type definition for DPT type "{knxFormat}" and value "{raw}" - {ex}')
         except (TypeError, ValueError) as ex:
             # log failure
             log('error',
-                f'Value could not be read "{attrName}"[{knxSrc}] value={dpt} - {ex}')
+                f'Value could not be read "{attrName}"[{knxSrc}] value={raw} - {ex}')
 
         return val
 
