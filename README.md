@@ -147,7 +147,7 @@ Given example is from a Samsung SmartThings gate control, a Devolo smoke alarm d
         zigbeeApplID:   1a
         zigbeeAttr:     "open"
         zigbeeFormat:   "boolean"
-        function:       "inv"
+        function:       "inv()"
         knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
         knxFormat:      "1.002"
         updFreq:        "very high"
@@ -197,7 +197,7 @@ Given example is from a Samsung SmartThings gate control, a Devolo smoke alarm d
 		zigbeeApplID:   3a
 		zigbeeAttr:     "xy"
 		zigbeeFormat:   "list"
-		function:       "rgb_2_xy"
+		function:       "rgb_2_xy()"
 		knxAddr:        '[<KNX_RED>,<KNX_GREEN>,<KNX_BLUE>]'
 		knxFormat:      "5.001"
 

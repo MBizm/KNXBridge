@@ -28,7 +28,7 @@ def executeFunction(deviceInstance, dpt, function, val,
 
     # check for appearance of a function list (function separated by comma or semicolon)
     # sample used for evaluation 'max(10),av(1,5),min(),hu('abc';56),oh([34/54/67]),(),async(59,val(false)),())'
-    regex = r"([a-zA-Z]+\(.*?\)+)[,;]?"
+    regex = r"([a-zA-Z0-9_-]+\(.*?\)+)[,;]?"
     functionStatements = re.findall(regex, function)
     for f in functionStatements:
         val = __executeFunctionImpl(deviceInstance, dpt, f, val,
