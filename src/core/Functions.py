@@ -1,4 +1,5 @@
 import re
+from collections import deque
 from datetime import datetime, timedelta, timezone
 
 import dateparser as dateparser
@@ -6,6 +7,7 @@ import dateparser as dateparser
 from threading import Timer
 from core.util.BasicUtil import log, is_number, convert_number, is_bool, convert_bool, convert_val2xy, convert_oct2int, NoneValueClass
 
+queueList = {}
 
 def executeFunction(deviceInstance, dpt, function, val,
                     attrName, knxDest, knxFormat):
@@ -25,12 +27,12 @@ def executeFunction(deviceInstance, dpt, function, val,
         return val
 
     # check for appearance of a function list (function separated by comma or semicolon)
-    tok = re.split("[,;]", function)
-    for i in range(0, len(tok)):
-        # None values might be set by functions, no further processing in these cases
-        if len(tok[i]) > 0 and val is not None:
-            val = __executeFunctionImpl(deviceInstance, dpt, tok[i].strip(), val,
-                                        attrName, knxDest, knxFormat)
+    # sample used for evaluation 'max(10),av(1,5),min(),hu('abc';56),oh([34/54/67]),(),async(59,val(false)),())'
+    regex = r"([a-zA-Z]+\(.*?\)+)[,;]?"
+    functionStatements = re.findall(regex, function)
+    for f in functionStatements:
+        val = __executeFunctionImpl(deviceInstance, dpt, f, val,
+                                    attrName, knxDest, knxFormat)
 
     return val
 
@@ -165,6 +167,27 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 errDetail = 'wrong function definition'
         else:
             errDetail = 'wrong value type'
+    elif function[:2] == 'av':
+        # returns the average value for a queue of values
+        # queue values are dropped sequentially when capacity is hit
+        if is_number(val):
+            par = re.split("[,;]", function[3:-1])
+            # split function parameter - av(<queueID>,<FIFOsize>)
+            queueID = str(par[0])
+            queueSize = int(par[1])
+            # check existing of queueID and save current value
+            global queueList
+            if not queueID in queueList:
+                queueList[queueID] = deque(maxlen=queueSize)
+            queue = queueList[queueID]
+            queue.append(val)
+            # calculate average
+            sum = 0
+            for i in queue:
+                sum = sum + i
+            val = sum / len(queue)
+        else:
+            errDetail = 'wrong value type'
     elif function[:6] == 'eqExcl':
         # checks if current value matches given value
         # in case of string values simply put the pattern into brackets without further escaping
@@ -254,7 +277,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         # important: use blank as separator not comma or semicolon!
         # examples: asynch(60 val(true))
         try:
-            tok = re.split("[ ]", function[7:-1])
+            tok = re.split("[,;]", function[7:-1])
             duration = tok[0]
             func = tok[1]
             asynchVal = executeFunction(deviceInstance,
