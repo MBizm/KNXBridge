@@ -132,7 +132,8 @@ class KNXWriter:
                     client = KNX2KNXClient()
                     client.installListener(attr['name'],
                                            attr['knxAddr'], attr['knxFormat'],
-                                           attr['knxDest'], getAttrSafe(attr, 'function'))
+                                           attr['knxDest'], getAttrSafe(attr, 'function'),
+                                           getAttrSafe(attr, 'flags'))
                 elif attr['type'] == 'mqtt2knx':
                     # mqtt client defines its own thread which permanently listens to update events
                     # avoid registering to targets which flood your KNX bus due to high frequency of update

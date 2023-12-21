@@ -44,7 +44,9 @@ def _asynchWrite(deviceInstance, attrName, knxDest, knxFormat, val):
 
 def __executeFunctionImpl(deviceInstance, dpt, function, val,
                           attrName, knxDest, knxFormat):
+    global queueList
     errDetail = None
+
     if function[:3] == 'val':
         # replace current value by static value
         try:
@@ -167,20 +169,74 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 errDetail = 'wrong function definition'
         else:
             errDetail = 'wrong value type'
+    elif function[:5] == 'avMax':
+        # returns the max value for a queue of values
+        # queue values are dropped sequentially when capacity is hit
+        par = re.split("[,;]", function[3:-1])
+        # split function parameter - av(<queueID>,<FIFOsize>)
+        queueID = str(par[0])
+        queueSize = int(par[1])
+        # check existing of queueID and save current value
+        if not queueID in queueList:
+            queueList[queueID] = deque(maxlen=queueSize)
+        queue = queueList[queueID]
+
+        if is_number(val):
+            queue.append(float(val))
+            # identify max value
+            for i in queue:
+                val = max(val, i)
+        elif is_bool(val):
+            queue.append(bool(val))
+            # identify false/true maximum
+            val = False
+            for i in queue:
+                if i:
+                    val = True
+                    break
+        else:
+            errDetail = 'wrong value type'
+    elif function[:5] == 'avMin':
+        # returns the min value for a queue of values
+        # queue values are dropped sequentially when capacity is hit
+        par = re.split("[,;]", function[3:-1])
+        # split function parameter - av(<queueID>,<FIFOsize>)
+        queueID = str(par[0])
+        queueSize = int(par[1])
+        # check existing of queueID and save current value
+        if not queueID in queueList:
+            queueList[queueID] = deque(maxlen=queueSize)
+        queue = queueList[queueID]
+
+        if is_number(val):
+            queue.append(float(val))
+            # identify min value
+            for i in queue:
+                val = min(val, i)
+        elif is_bool(val):
+            queue.append(bool(val))
+            # identify false/true minimum
+            val = True
+            for i in queue:
+                if not i:
+                    val = False
+                    break
+        else:
+            errDetail = 'wrong value type'
     elif function[:2] == 'av':
         # returns the average value for a queue of values
         # queue values are dropped sequentially when capacity is hit
+        par = re.split("[,;]", function[3:-1])
+        # split function parameter - av(<queueID>,<FIFOsize>)
+        queueID = str(par[0])
+        queueSize = int(par[1])
+        # check existing of queueID and save current value
+        if not queueID in queueList:
+            queueList[queueID] = deque(maxlen=queueSize)
+        queue = queueList[queueID]
+
         if is_number(val):
-            par = re.split("[,;]", function[3:-1])
-            # split function parameter - av(<queueID>,<FIFOsize>)
-            queueID = str(par[0])
-            queueSize = int(par[1])
-            # check existing of queueID and save current value
-            global queueList
-            if not queueID in queueList:
-                queueList[queueID] = deque(maxlen=queueSize)
-            queue = queueList[queueID]
-            queue.append(val)
+            queue.append(float(val))
             # calculate average
             sum = 0
             for i in queue:

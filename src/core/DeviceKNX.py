@@ -30,18 +30,18 @@ class KNX2KNXClient(KNXDDevice):
 
     def setAttribute(self, attrName: str, val,
                      dest: str, format: str,
-                     function: str):
+                     function: str, flags: str):
         # reuse base implementation to write value to bus with destination target
         return self.writeKNXAttribute(attrName, dest, format,
-                                      val, function)
+                                      val, function, flags)
 
     def installListener(self, attrName: str,
                         knxSrc: str, knxFormat: str,
-                        knxDest: str, function=None):
+                        knxDest: str, function=None, flags=None):
         # create new listener that will route incoming knx events and to another knx target
         listener = KNX2KNXClientListener(self, attrName,
                                          knxSrc, knxFormat,
-                                         knxDest, function)
+                                         knxDest, function, flags)
         # register listener on central EIB/KNX bus monitor
         EIBClientFactory().registerListener(listener)
 
@@ -53,7 +53,7 @@ class KNX2KNXClientListener(EIBClientListener):
 
     def __init__(self, knxClient: KNX2KNXClient, attrName: str,
                  knxSrc: str, knxFormat: str,
-                 knxDest: str, function=None):
+                 knxDest: str, function=None, flags=None):
         # call super class
         super().__init__(knxSrc)
         # store instance attributes
@@ -62,6 +62,7 @@ class KNX2KNXClientListener(EIBClientListener):
         self.knxFormat = knxFormat
         self.knxDest = knxDest
         self.function = function
+        self.flags = flags
         # self.knxAggr = knxAggr
         # self.zigTrans = zigTrans
 
@@ -94,7 +95,7 @@ class KNX2KNXClientListener(EIBClientListener):
         if val is not None and type(val) is not NoneValueClass and \
                 self.knxClient.setAttribute(attrName=self.attrName, val=val,
                                             dest=self.knxDest, format=self.knxFormat,
-                                            function=self.function):
+                                            function=self.function, flags=self.flags):
             log('info',
                 'Value updated based on KNX value change {0}({1}): {2} for KNX client {3}'.format(self.attrName, knxSrc,
                                                                                                   val, self.knxDest))
