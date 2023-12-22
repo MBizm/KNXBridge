@@ -62,7 +62,8 @@ class ZigBeeGateway(ApplianceBase):
                                                                      ZigBeeGateway.__deconzToken))
             ZigBeeGateway.__state = yaml.safe_load(response.text)
         except requests.exceptions.RequestException as e:
-            print("ZigBeeGateway - could not load client information: {0}".format(e))
+            log('info',
+                'Could not connect to ZigBee client [getState]: {0}'.format(e))
 
     def getClientState(self, id, type, attr, section=None):
         """ get attribute for a defined client """
@@ -105,14 +106,16 @@ class ZigBeeGateway(ApplianceBase):
         if function:
             val = Functions.executeFunction(None, None, function, val,
                                             attr, None, None)
-
-        response = requests.put("http://{0}:{1}/api/{2}/{3}/{4}/{5}".format(ZigBeeGateway.__deconzIP,
-                                                                            ZigBeeGateway.__deconzPort,
-                                                                            ZigBeeGateway.__deconzToken,
-                                                                            type,
-                                                                            id,
-                                                                            'state'),
-                                json={attr: val})
+        try:
+            response = requests.put("http://{0}:{1}/api/{2}/{3}/{4}/{5}".format(ZigBeeGateway.__deconzIP,
+                                                                                ZigBeeGateway.__deconzPort,
+                                                                                ZigBeeGateway.__deconzToken,
+                                                                                type,
+                                                                                id,
+                                                                                'state'),
+                                    json={attr: val})
+        except requests.exceptions.ConnectionError as e:
+            return False
 
         if response.status_code != 200:
             return False
