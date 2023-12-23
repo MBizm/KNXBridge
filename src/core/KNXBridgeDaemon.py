@@ -30,7 +30,7 @@ from threading import Timer
 from typing import Dict
 
 from core.DeviceBase import KNXGateway
-from core.DeviceKNX import KNX2KNXClient
+from core.DeviceKNX import KNX2KNXClient, KNX2KNXFactory
 from core.DeviceMQTT import MQTTAppliance
 from core.DeviceModBus import ModBusClient
 from core.DeviceZigBee import ZigBeeClient, ZigBeeGateway
@@ -127,13 +127,12 @@ class KNXWriter:
                                                attr['zigbeeAttr'], attr['zigbeeFormat'],
                                                getAttrSafe(attr, 'zigbeeSection'), getAttrSafe(attr, 'function'))
                 elif attr['type'] == 'knx2knx':
-                    # knx2knx devices require dedicated handling only as part of the registration for KNX bus monitoring
-                    # create client here without keeping handle to the instance
-                    client = KNX2KNXClient()
-                    client.installListener(attr['name'],
-                                           attr['knxAddr'], attr['knxFormat'],
-                                           attr['knxDest'], getAttrSafe(attr, 'function'),
-                                           getAttrSafe(attr, 'flags'))
+                    # initialize new client, implicitely setting up the listener during construction
+                    # usually KNX clients react to changes to the KNX source ('knxAddr') but can also define an update frequency explicitely
+                    client = KNX2KNXFactory.initializeClient(attr['name'],
+                                                               attr['knxAddr'], attr['knxFormat'],
+                                                               attr['knxDest'], getAttrSafe(attr, 'function'),
+                                                               getAttrSafe(attr, 'flags'))
                 elif attr['type'] == 'mqtt2knx':
                     # mqtt client defines its own thread which permanently listens to update events
                     # avoid registering to targets which flood your KNX bus due to high frequency of update
@@ -188,6 +187,15 @@ class KNXWriter:
                     else:
                         log('error',
                             'Configuration error - zigbeeApplID({0}) not defined'.format(attr['zigbeeApplID']))
+                # handle knx attributes that explicitly define an update frequency
+                # normal knx client reacts to changes to the knx source address
+                elif attr['type'] == 'knx2knx':
+                    # get defined knx client
+                    client = KNX2KNXFactory.getClient(attr['name'])
+                    # knx2knx protocal foresees 'knxAddr' as the source and 'knxDest' as the destination
+                    destAddr = getAttrSafe(attr, 'knxDest')
+                    # get current value of source address
+                    newVal = client.getSrcValue()
 
                 # write value to bus
                 if client is not None and newVal is not None:

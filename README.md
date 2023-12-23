@@ -41,7 +41,7 @@ For reference of all attributes and template of the whole configuration file ref
     configSet:  Optional Title for your configuration file
     configNote: >
       Optional detailed description and remarks for your configuration file
-    configVersion:  0.3 		# format version of config file
+    configVersion:  0.5 		# format version of config file
     configVerbose:  "info"	# log level - "off", "error", "warning", "change", "info" 
 
 ## Supported appliances/gateways
@@ -50,7 +50,7 @@ For reference of all attributes and template of the whole configuration file ref
 | ModBus | Polling with frequency defined via *updFreq* attribute | -- |
 |ZigBee|Polling via the [deConz ZigBee Gateway Rest API](https://www.dresden-elektronik.de/funk/software/deconz.html) with frequency defined via *updFreq* attribute | -- |
 | MQTT | Listening to defined MQTT broker instance with immediate update to the KNX bus. | **Watch out: high frequency update of MQTT clients might flood your KNX bus!!**|
-|KNX | KNXDaemon can register as a listener for a KNX address and route the value to another target address. | -- |
+|KNX | KNXDaemon can register as a listener for a KNX address and route the value to another target address. Optional: polling frequency may be defined via updFreq attribute in addition to listening to src address | -- |
 
 ### KNXD appliance definition (obligatory):
 
@@ -105,7 +105,7 @@ Some components (can be also called YAML block items) are shared across applianc
 | *name* (obligatory) | String explanation of attribute, mainly for YAML readability as well as logging purpose |--|
 | *knxAddr* (obligatory) | KNX address in *XXX/YYY/ZZZ* representation; for all KNX write actions (e.g. *modbus2knx*) this defines the target the value shall be written to, for all KNX read actions (e.g. *knx2knx*) this defines the source the value shall be retrieved from |--|
 | *knxFormat* (obligatory) | DPT representation which defines how the KNX bus expects the value to be represented / value from the KNX bus shall be interpreted. The DPT is supposed to defined in the full DPT value definition, e.g. "*14.077"*, *"1.002"*. Carefully check the DPT type expected for the specific scenarios, e.g. some vendor write *"1.001"* Switch Value with corresponding values *"On"*/*"Off"* while actually expecting *"1.002"* Boolean Value with corresponding values *"True"*/*"False"*.| [KNX DPT Definition](https://web.archive.org/web/20140809211802/http:/www.knx.org/fileadmin/template/documents/downloads_support_menu/KNX_tutor_seminar_page/Advanced_documentation/05_Interworking_E1209.pdf) |
-| *updFreq* (obligatory for some appliance types) | Defines the time interval the value shall be checked for changes; this applies to appliances which are polled only (e.g. ZigBee, ModBus) |--|
+| *updFreq* (obligatory for some appliance types) | Defines the time interval the value shall be checked for changes; this applies to appliances which are polled only (e.g. ZigBee, ModBus). Optional polling is also enalbed for KNX devices. |--|
 | *function* (optional) | Set of transformations that can be performed before the value is written to its destination. | [Functions implementation docu](https://github.com/MBizm/KNXBridge/blob/main/src/core/Functions.py) |
 
 
@@ -224,4 +224,25 @@ Given example is from a Samsung SmartThings gate control, a Devolo smoke alarm d
         knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
         knxFormat:      "1.002"
         knxDest:        <ENTER YOUR KNX ADDRESS HERE>
+	  #######################################################################
+	  #   Entrance Movement Detection   									#
+      #	  Allows mutiple devices to define turn on/turn off cycle of lights	#
+	  #######################################################################
+	  - name:           "Average Switch Entrance 3m"
+		type:           "knx2knx"
+		knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+		knxFormat:      "1.001"
+		knxDest:        <ENTER YOUR KNX ADDRESS HERE>
+		# queueing function - allows tracing value over a period of time
+		function:       "avMax('EntranceMovement', 18)"
+	  - name:           "Average Movement Detector Entrance 3m"
+		type:           "knx2knx"
+		knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+		knxFormat:      "1.001"
+		knxDest:        <ENTER YOUR KNX ADDRESS HERE>
+		# queueing function - references to the same queue
+		function:       "avMax('EntranceMovement')"
+		# pooling of knx2knx value
+		updFreq:        "very high"
+
 

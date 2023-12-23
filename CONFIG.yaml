@@ -12,7 +12,7 @@ configSet:  KNX Bridge for Modbus and ZigBee configuration
 configNote: >
   The configuration file declaring the client and their respective attributes to be exchanged is located in *~/.knx/bridge/CONFIG.yaml*.
   Folder and initial configuration template will be created by installation script.
-configVersion:  0.3
+configVersion:  0.5
 configVerbose:  "info"
 
 #################################################
@@ -121,6 +121,34 @@ attributes:
     modbusFormat:   "float"
     knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
     knxFormat:      "14.056"
+    updFreq:        "very high"
+  - name:           "Average Power Consumption 10m" # Durchschnitt Strom 10min
+    type:           "knx2knx"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "14.056"
+    knxDest:        <ENTER YOUR KNX ADDRESS HERE>
+    # queueing function - allows tracing value over a period of time
+    function:       "av('AvPowerConsumption10m',30)"
+
+  #######################################################################
+  #   Entrance Movement Detection   									#
+  #	  Allows mutiple devices to define turn on/turn off cycle of lights	#
+  #######################################################################
+  - name:           "Average Switch Entrance 3m"
+    type:           "knx2knx"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.001"
+    knxDest:        <ENTER YOUR KNX ADDRESS HERE>
+    # queueing function - allows tracing value over a period of time
+    function:       "avMax('EntranceMovement', 18)"
+  - name:           "Average Movement Detector Entrance 3m"
+    type:           "knx2knx"
+    knxAddr:        <ENTER YOUR KNX ADDRESS HERE>
+    knxFormat:      "1.001"
+    knxDest:        <ENTER YOUR KNX ADDRESS HERE>
+    # queueing function - references to the same queue
+    function:       "avMax('EntranceMovement')"
+    # pooling of knx2knx value
     updFreq:        "very high"
 
   ####################

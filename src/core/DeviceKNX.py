@@ -8,6 +8,40 @@ from core.util.BasicUtil import log, NoneValueClass
 from core.util.KNXDUtil import DPTXlatorFactoryFacade
 from pknyx.core.dptXlator.dptXlatorFactory import DPTXlatorFactory
 
+class KNX2KNXFactory():
+    """
+    Creates clients for KNX to KNX communication
+    """
+    __instance = None
+    __clientList = {}
+
+    def __new__(cls, *args, **kwargs):
+        if KNX2KNXFactory.__instance is None:
+            KNX2KNXFactory.__instance = object.__new__(cls)
+        return KNX2KNXFactory.__instance
+
+    @staticmethod
+    def initializeClient(attrName: str,
+                         knxSrc: str, knxFormat: str,
+                         knxDest: str, function=None, flags=None):
+        """
+        creates client instance and sets up listener for src address
+        :returns KNX2KNXClient
+        """
+        client = KNX2KNXClient()
+        client.installListener(attrName,
+                                knxSrc, knxFormat,
+                                knxDest, function, flags)
+        KNX2KNXFactory.__clientList[attrName] = client
+        return client
+
+    @staticmethod
+    def getClient(attrName: str):
+        """
+        returns existing client instance for given ID
+        :returns KNX2KNXClient
+        """
+        return KNX2KNXFactory.__clientList[attrName]
 
 class KNX2KNXClient(KNXDDevice):
     """
@@ -24,9 +58,26 @@ class KNX2KNXClient(KNXDDevice):
         """
         super()
 
+    def getSrcValue(self):
+        """
+        return current value of source address 'knxAddr'
+        """
+        return self.getAttribute(self.listener.attrName,
+                                 self.listener.knxFormat,
+                                 self.listener.knxSrc)
+
+    def getDestValue(self):
+        """
+        return current value of destination address 'knxDest'
+        """
+        return self.getAttribute(self.listener.attrName,
+                                 self.listener.knxFormat,
+                                 self.listener.knxSrc)
+
     def getAttribute(self, name, format, attr):
         # the knx2knx implementation shall get value of src via readKNXAttribute()
-        raise NotImplementedError
+        return self.readKNXAttribute(name, attr, format,
+                                        self.listener.function)
 
     def setAttribute(self, attrName: str, val,
                      dest: str, format: str,
@@ -39,11 +90,11 @@ class KNX2KNXClient(KNXDDevice):
                         knxSrc: str, knxFormat: str,
                         knxDest: str, function=None, flags=None):
         # create new listener that will route incoming knx events and to another knx target
-        listener = KNX2KNXClientListener(self, attrName,
-                                         knxSrc, knxFormat,
-                                         knxDest, function, flags)
+        self.listener = KNX2KNXClientListener(self, attrName,
+                                                knxSrc, knxFormat,
+                                                knxDest, function, flags)
         # register listener on central EIB/KNX bus monitor
-        EIBClientFactory().registerListener(listener)
+        EIBClientFactory().registerListener(self.listener)
 
 
 class KNX2KNXClientListener(EIBClientListener):
@@ -57,6 +108,7 @@ class KNX2KNXClientListener(EIBClientListener):
         # call super class
         super().__init__(knxSrc)
         # store instance attributes
+        self.knxSrc = knxSrc
         self.knxClient = knxClient
         self.attrName = attrName
         self.knxFormat = knxFormat

@@ -84,9 +84,9 @@ def getAttrSafe(attr, key):
 #   Numeric helper methods      #
 #################################
 def is_number(val):
-    if isinstance(val, (int, float)):
+    if type(val) == int or type(val) == float:
         return True
-    elif isinstance(val, list):
+    elif type(val) == list:
         return False
     else:
         try:
@@ -98,16 +98,16 @@ def is_number(val):
 
 
 def is_bool(val):
-    if isinstance(val, bool):
+    if type(val) == bool:
         return True
-    elif isinstance(val, str) and (
-            val.lower() == "true" or val.lower() == "false"):
+    elif type(val) == str and \
+            (val.lower() == "true" or val.lower() == "false"):
         return True
     return False
 
 
 def convert_number(val):
-    if isinstance(val, str):
+    if type(val) == str:
         if val.isdigit():
             val = int(val)
         else:

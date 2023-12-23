@@ -1,4 +1,5 @@
 import os
+import re
 
 from EIBClient import EIBClientFactory
 from common import printValue
@@ -43,7 +44,7 @@ class KNXDDevice:
         """
         ret = False
 
-        if type == 'modbus2knx' or type == 'zigbee2knx':
+        if type == 'modbus2knx' or type == 'zigbee2knx' or type == 'knx2knx':
             ret = self.writeKNXAttribute(attrName, knxDest, knxFormat, val, function, flags)
         else:
             raise NotImplementedError
@@ -53,6 +54,29 @@ class KNXDDevice:
     #########################################
     #   KNX specific methods, read/write    #
     #########################################
+    @staticmethod
+    def __readKNXAttributeRaw(knxSrc):
+        """
+        reads values via EIB/KNX client
+        :returns    KNX raw value from bus
+        """
+
+        # EIBCache gets stuck in the processing when explicitly calling readKNXAttribute +
+        # EIBCache throws errors for existing exceptions for addresses not within the major address space
+        # e.g. Client source address "1/1/1", works for "1/1/2" or "1/2/1" but not for "24/1/1"
+        #
+        # retrieve values via cmd tool as alternative
+        #try:
+        #    raw = EIBClientFactory().getClient().GroupCache_Read(knxSrc)
+        #except ValueError:
+        raw = os.popen('knxtool groupcacheread ip:{0} {1}'.format(KNXGateway().hostIP,
+                                                                  knxSrc)).readline().strip()
+        # extract result from stdout output
+        regex = r": (.*?)$"
+        raw = re.findall(regex, raw)[0].strip()
+
+        return raw
+
     def readKNXAttribute(self, attrName, knxSrc, knxFormat, function=None):
         """
         reads values via EIB/KNX client
@@ -60,7 +84,7 @@ class KNXDDevice:
         """
         val = None
 
-        raw = EIBClientFactory().getClient().GroupCache_Read(knxSrc)
+        raw = KNXDDevice.__readKNXAttributeRaw(knxSrc)
 
 #        # convert value from string representation into hex
 #        dpt = int(dpt, 16)
@@ -169,7 +193,7 @@ class KNXDDevice:
         """
         ret = False
         try:
-            curKNXVal = EIBClientFactory().getClient().GroupCache_Read(knxDest)
+            curKNXVal = KNXDDevice.__readKNXAttributeRaw(knxDest)
 
             if len(newVal) == 1 and len(curKNXVal) == 2:
                 curKNXVal = curKNXVal[1:]

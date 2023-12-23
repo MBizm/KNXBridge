@@ -175,7 +175,12 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         par = re.split("[,;]", function[3:-1])
         # split function parameter - av(<queueID>,<FIFOsize>)
         queueID = str(par[0])
-        queueSize = int(par[1])
+        # optional definition of queue size, e.g. multiple references to the same queue
+        if(len(par) > 1):
+            queueSize = int(par[1])
+        else:
+            # arbitrary value
+            queueSize = 10
         # check existing of queueID and save current value
         if not queueID in queueList:
             queueList[queueID] = deque(maxlen=queueSize)
@@ -194,6 +199,20 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 if i:
                     val = True
                     break
+        elif type(val) == str and \
+            (val == 'Off' or val == 'On'):
+            # perform avMax execution by recursive call
+            if val == 'Off':
+                val = __executeFunctionImpl(deviceInstance, dpt, function, False,
+                                            attrName, knxDest, knxFormat)
+            else:
+                val = __executeFunctionImpl(deviceInstance, dpt, function, True,
+                                            attrName, knxDest, knxFormat)
+            # perform backward mapping to On/Off value
+            if val:
+                val = 'On'
+            else:
+                val = 'Off'
         else:
             errDetail = 'wrong value type'
     elif function[:5] == 'avMin':
@@ -202,7 +221,12 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         par = re.split("[,;]", function[3:-1])
         # split function parameter - av(<queueID>,<FIFOsize>)
         queueID = str(par[0])
-        queueSize = int(par[1])
+        # optional definition of queue size, e.g. multiple references to the same queue
+        if(len(par) > 1):
+            queueSize = int(par[1])
+        else:
+            # arbitrary value
+            queueSize = 10
         # check existing of queueID and save current value
         if not queueID in queueList:
             queueList[queueID] = deque(maxlen=queueSize)
@@ -221,6 +245,20 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 if not i:
                     val = False
                     break
+        elif type(val) == str and \
+                (val == 'Off' or val == 'On'):
+            # perform avMin execution by recursive call
+            if val == 'Off':
+                val = __executeFunctionImpl(deviceInstance, dpt, function, False,
+                                            attrName, knxDest, knxFormat)
+            else:
+                val = __executeFunctionImpl(deviceInstance, dpt, function, True,
+                                            attrName, knxDest, knxFormat)
+            # perform backward mapping to On/Off value
+            if val:
+                val = 'On'
+            else:
+                val = 'Off'
         else:
             errDetail = 'wrong value type'
     elif function[:2] == 'av':
@@ -229,7 +267,12 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         par = re.split("[,;]", function[3:-1])
         # split function parameter - av(<queueID>,<FIFOsize>)
         queueID = str(par[0])
-        queueSize = int(par[1])
+        # optional definition of queue size, e.g. multiple references to the same queue
+        if(len(par) > 1):
+            queueSize = int(par[1])
+        else:
+            # arbitrary value
+            queueSize = 10
         # check existing of queueID and save current value
         if not queueID in queueList:
             queueList[queueID] = deque(maxlen=queueSize)
@@ -267,7 +310,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                     val = NoneValueClass()
             except ValueError:
                 errDetail = 'wrong function definition'
-        elif isinstance(val, str):
+        elif type(val) == str:
             try:
                 if str(val) == str(function[7:-1]):
                     val = True
@@ -290,7 +333,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 val = (convert_bool(val) == convert_bool(function[3:-1]))
             except ValueError:
                 errDetail = 'wrong function definition'
-        elif isinstance(val, str):
+        elif type(val) == str:
             try:
                 val = (str(val) == str(function[3:-1]))
             except ValueError:
