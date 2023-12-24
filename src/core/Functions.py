@@ -31,8 +31,9 @@ def executeFunction(deviceInstance, dpt, function, val,
     regex = r"([a-zA-Z0-9_-]+\(.*?\)+)[,;]?"
     functionStatements = re.findall(regex, function)
     for f in functionStatements:
-        val = __executeFunctionImpl(deviceInstance, dpt, f, val,
-                                    attrName, knxDest, knxFormat)
+        if type(val) != NoneValueClass:
+            val = __executeFunctionImpl(deviceInstance, dpt, f, val,
+                                        attrName, knxDest, knxFormat)
 
     return val
 
@@ -175,14 +176,14 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         par = re.split("[,;]", function[3:-1])
         # split function parameter - av(<queueID>,<FIFOsize>)
         queueID = str(par[0])
-        # optional definition of queue size, e.g. multiple references to the same queue
-        if(len(par) > 1):
-            queueSize = int(par[1])
-        else:
-            # arbitrary value
-            queueSize = 10
         # check existing of queueID and save current value
         if not queueID in queueList:
+            # optional definition of queue size, e.g. multiple references to the same queue
+            if (len(par) > 1):
+                queueSize = int(par[1])
+            else:
+                # arbitrary value
+                queueSize = 10
             queueList[queueID] = deque(maxlen=queueSize)
         queue = queueList[queueID]
 
@@ -221,14 +222,14 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         par = re.split("[,;]", function[3:-1])
         # split function parameter - av(<queueID>,<FIFOsize>)
         queueID = str(par[0])
-        # optional definition of queue size, e.g. multiple references to the same queue
-        if(len(par) > 1):
-            queueSize = int(par[1])
-        else:
-            # arbitrary value
-            queueSize = 10
         # check existing of queueID and save current value
         if not queueID in queueList:
+            # optional definition of queue size, e.g. multiple references to the same queue
+            if (len(par) > 1):
+                queueSize = int(par[1])
+            else:
+                # arbitrary value
+                queueSize = 10
             queueList[queueID] = deque(maxlen=queueSize)
         queue = queueList[queueID]
 
@@ -267,14 +268,14 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         par = re.split("[,;]", function[3:-1])
         # split function parameter - av(<queueID>,<FIFOsize>)
         queueID = str(par[0])
-        # optional definition of queue size, e.g. multiple references to the same queue
-        if(len(par) > 1):
-            queueSize = int(par[1])
-        else:
-            # arbitrary value
-            queueSize = 10
         # check existing of queueID and save current value
         if not queueID in queueList:
+            # optional definition of queue size, e.g. multiple references to the same queue
+            if (len(par) > 1):
+                queueSize = int(par[1])
+            else:
+                # arbitrary value
+                queueSize = 10
             queueList[queueID] = deque(maxlen=queueSize)
         queue = queueList[queueID]
 
@@ -292,9 +293,15 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
         # in case of string values simply put the pattern into brackets without further escaping
         # example: eqExcl("Check against this string")
         # return only True if matching, otherwise None for no further processing
+        # check for live KNX value
+        gv = function[7:-1]
+        if '/' in gv:
+            gv = deviceInstance.readKNXAttribute("functions live value",
+                                                 gv, knxFormat)
+        # start comparison
         if is_number(val):
             try:
-                if float(val) == float(function[7:-1]):
+                if float(val) == convert_number(float(gv)):
                     val = True
                 else:
                     # indicate legitim None value
@@ -303,7 +310,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 errDetail = 'wrong function definition'
         elif is_bool(val):
             try:
-                if convert_bool(val) == convert_bool(function[7:-1]):
+                if convert_bool(val) == convert_bool(gv):
                     val = True
                 else:
                     # indicate legitim None value
@@ -312,7 +319,7 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
                 errDetail = 'wrong function definition'
         elif type(val) == str:
             try:
-                if str(val) == str(function[7:-1]):
+                if str(val) == str(gv):
                     val = True
                 else:
                     # indicate legitim None value
@@ -323,19 +330,25 @@ def __executeFunctionImpl(deviceInstance, dpt, function, val,
             errDetail = 'wrong value type'
     elif function[:2] == 'eq':
         # checks if current value matches given value, return either true or false
+        # check for live KNX value
+        gv = function[3:-1]
+        if '/' in gv:
+            gv = deviceInstance.readKNXAttribute("functions live value",
+                                                 gv, knxFormat)
+        # start comparison
         if is_number(val):
             try:
-                val = (float(val) == float(function[3:-1]))
+                val = (float(val) == convert_number(float(gv)))
             except ValueError:
                 errDetail = 'wrong function definition'
         elif is_bool(val):
             try:
-                val = (convert_bool(val) == convert_bool(function[3:-1]))
+                val = (convert_bool(val) == convert_bool(gv))
             except ValueError:
                 errDetail = 'wrong function definition'
         elif type(val) == str:
             try:
-                val = (str(val) == str(function[3:-1]))
+                val = (str(val) == str(gv))
             except ValueError:
                 errDetail = 'wrong function definition'
         else:

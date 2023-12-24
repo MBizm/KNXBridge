@@ -88,6 +88,10 @@ def is_number(val):
         return True
     elif type(val) == list:
         return False
+    elif type(val) == bool:
+        return False
+    elif type(val) == NoneValueClass:
+        return False
     else:
         try:
             float(val)
@@ -116,7 +120,9 @@ def convert_number(val):
 
 
 def convert_bool(val):
-    if val.lower() == "true":
+    if type(val) == bool:
+        return val
+    elif val.lower() == "true":
         return True
     elif val.lower() == "false":
         return False

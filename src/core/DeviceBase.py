@@ -73,7 +73,9 @@ class KNXDDevice:
                                                                   knxSrc)).readline().strip()
         # extract result from stdout output
         regex = r": (.*?)$"
-        raw = re.findall(regex, raw)[0].strip()
+        rf = re.findall(regex, raw)
+        if len(rf) > 0:
+            raw = rf[0].strip()
 
         return raw
 
@@ -149,7 +151,7 @@ class KNXDDevice:
         except (TypeError, ValueError) as ex:
             # log failure
             log('error',
-                f'Value could not be updated "{attrName}"[{knxDest}] value={val} - {ex}')
+                f'Value could not be updated "{attrName}"[{knxDest}] value={val} - Check type definition for DPT type "{knxFormat}" and value "{val}", Details: {ex}')
 
         if dpt is None:
             return False
